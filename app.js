@@ -93,11 +93,11 @@ app.use("/login", async(req, res)=>{
 
         if((userEmail && (await bcrypt.compare(password, userEmail.password)))|| userPhone && (await bcrypt.compare(password, userPhone.password))){
             const token = jwt.sign(
-                {user_id: userEmail._id,emailorphone},
-                process.env.TOKEN_KEY,
                 {
-                    expiresIn:'2h',
+                    emailorphone:emailorphone,
+                    isVerified:false
                 }
+
             )
             userEmail.token = token;
 
