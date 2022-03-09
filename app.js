@@ -12,6 +12,8 @@ const app = express();
 const passport = require('passport')
 const bodyParser = require("body-parser");
 
+const database = 
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -24,6 +26,10 @@ app.use("/welcome", (req,res)=>{
 
 //import user context
 const User = require("./model/user");
+const Traveler = require("./model/traveler");
+const Message = require("./model/message")
+const user = require("./model/user");
+const Ride = require("./model/ride")
 
 //Register
 app.use("/register", async (req, res) =>{
@@ -60,6 +66,13 @@ app.use("/register", async (req, res) =>{
             phone,
             password:encryptedPassword
         });
+
+        const traveler = Traveler.create({
+            first_name,
+            last_name,
+            email:email.toLowerCase(),
+            phone,  
+        })
 
         const token = jwt.sign(
             {user_id : user.id, email,first_name,last_name,phone},
@@ -111,6 +124,197 @@ app.use("/login", async(req, res)=>{
         console.log(err)
 
     }
+})
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use("/distance", async(req, res)=>{
+    try{
+        const { _id, distance } = req.body
+        console.log(req.body)
+        const traveler = await Traveler.findOne({_id});
+        console.log(traveler)
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {distance:distance})
+        // console.log(req.body)
+        res.status(200).json(update)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
+app.use("/duration", async(req, res)=>{
+    try{
+        const { _id, duration } = req.body
+        console.log(req.body)
+        const traveler = await Traveler.findOne({_id});
+        console.log(traveler)
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {duration:duration})
+        // console.log(req.body)
+        res.status(200).json(update)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
+app.use("/cost", async(req, res)=>{
+    try{
+        const { _id, cost } = req.body
+        console.log(req.body)
+        const traveler = await Traveler.findOne({_id});
+        console.log(traveler)
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {cost:cost})
+        // console.log(req.body)
+        res.status(200).json(update)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
+app.use("/mode", async(req, res)=>{
+    try{
+        const { _id, mode } = req.body
+        const traveler = await Traveler.findOne({_id});
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {mode:mode})
+
+        console.log(update)
+        res.status(200).json(update)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
+app.use("/location", async(req, res)=>{
+    try{
+        const { _id, location } = req.body
+        const traveler = await Traveler.findOne({_id});
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {location:location})
+
+        console.log(update)
+        res.status(200).json(update)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
+app.use("/departure", async(req, res)=>{
+    try{
+        const { _id, departure } = req.body
+        const traveler = await Traveler.findOne({_id});
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {departure:departure})
+        console.log(update)
+        res.status(200).json(update)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
+
+app.use("/devicetoken", async(req, res)=>{
+    try{
+        const { _id, devToken } = req.body
+        const traveler = await Traveler.findOne({_id});
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {devToken:devToken})
+        console.log(update)
+        res.status(200).json(update)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
+app.use("/setrideid", async(req, res)=>{
+    try{
+        const { _id, currentRideId } = req.body
+        const traveler = await Traveler.findOne({_id});
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {currentRideId:currentRideId})
+        console.log(update)
+        res.status(200).json(update)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
+app.use("/sendmessage", async(req, res)=>{
+    try{
+        const { _id, messagetext, rideid } = req.body
+
+        const message = Message.create({
+            senderid:_id,
+            messagetext,
+            rideid
+        })
+        console.log(message)
+        res.status(200).json(message)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
+app.use("/createride", async(req, res)=>{
+    try{
+
+        const ride = Ride.create({
+
+        })
+        console.log(ride)
+        res.status(200).json(ride)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
+app.use("/addcarpooler", async(req, res)=>{
+    try{
+        const { _id, carpooler } = req.body
+        const ride = await Ride.findOne({_id});
+        const update = await Ride.findOneAndUpdate({id:_id}, {$push: {carpoolers: carpooler}})
+        res.status(200).json(update)
+
+    }
+    catch(err){
+        console.log(err)
+        res.status(400).json(err)
+    }
+
 })
 
 ///For google login
