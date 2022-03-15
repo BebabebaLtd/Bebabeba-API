@@ -98,7 +98,6 @@ app.use("/login", async(req, res)=>{
     ///login logic
     try{
         const { emailorphone, password } = req.body;
-        
         if(!(emailorphone&&password)){
             res.status(400).send("All input is required");
         }
@@ -107,12 +106,12 @@ app.use("/login", async(req, res)=>{
 
         if((userEmail && (await bcrypt.compare(password, userEmail.password)))|| userPhone && (await bcrypt.compare(password, userPhone.password))){
             const token = jwt.sign(
+                {user_id : emailorphone },
+                process.env.TOKEN_KEY,
                 {
-                    emailorphone:emailorphone,
-                    isVerified:false
+                    expiresIn:"2h",
                 }
-
-            )
+            );
             userEmail.token = token;
 
             res.status(200).json(userEmail.token)
@@ -127,16 +126,19 @@ app.use("/login", async(req, res)=>{
     }
 })
 
-
+var dirs;
 const googleMapDirection = async(srcLat, srcLng, destLat, destLng)=> {
     var config = {
       method: 'get',
       url: 'https://maps.googleapis.com/maps/api/directions/json?origin='+srcLat+','+srcLng+'&destination='+destLat+','+destLng+ '&mode=driving&key=AIzaSyB0VZQy9-x8UEsjC6sTrQbRe5UohJn8fH0',
       headers: { }
     };
+
+    console.log("++++url",config.url)
     await axios(config)
     .then(function (response) { 
-        console.log(response.data.routes)
+
+        dirs = response.data
         return response.data
     }
     )
@@ -340,10 +342,10 @@ app.use("/addcarpooler", async(req, res)=>{
 
 app.use("/getdirections", async(req, res)=>{
     try{
-        const { _id, source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
-        const directions = await googleMapDirection()
-        // console.log(directions)
-        // console.log(req.body)
+        const { source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
+        await googleMapDirection(source_latitude, source_longitude, destination_latitude, destination_longitude)
+        const directions =  dirs 
+        console.log('=====>dirs'+  directions  )
         res.status(200).json( directions )
 
     }
