@@ -13,7 +13,8 @@ const travelerSchema = new mongoose.Schema({
     currentRideId:{type:String, default:''},
     location:{type:Object},
     mode:{type:String, default:''},
-    departure:{type:Date, default:null}
+    departure:{type:Date, default:null},
+    directions:{type:String, default:''}
 });
 
 module.exports  = mongoose.model("traveler", travelerSchema);

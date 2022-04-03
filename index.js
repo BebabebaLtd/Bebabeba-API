@@ -8,6 +8,6 @@ const port = process.env.PORT || API_PORT
 
 server.listen(port, () =>{
     console.log(`Server running on port ${port}`)
-    console.log(API_PORT)
-    console.log(MONGO_URI)
+    console.log(`Server running on port ${API_PORT}`)
+    console.log(`Server running on port ${MONGO_URI}`)
 })

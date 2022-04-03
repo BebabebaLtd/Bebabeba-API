@@ -13,7 +13,7 @@ const passport = require('passport')
 const bodyParser = require("body-parser");
 const axios = require('axios')
 
-const database = 
+const googleMapDirections = require('./googleMapDirections')
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -30,7 +30,9 @@ const User = require("./model/user");
 const Traveler = require("./model/traveler");
 const Message = require("./model/message")
 const user = require("./model/user");
-const Ride = require("./model/ride")
+const Ride = require("./model/ride");
+const decode = require("./googledecode");
+const { checkCarpoolViability } = require("./checkCarpoolViability");
 
 //Register
 app.use("/register", async (req, res) =>{
@@ -126,28 +128,7 @@ app.use("/login", async(req, res)=>{
     }
 })
 
-var dirs;
-const googleMapDirection = async(srcLat, srcLng, destLat, destLng)=> {
-    var config = {
-      method: 'get',
-      url: 'https://maps.googleapis.com/maps/api/directions/json?origin='+srcLat+','+srcLng+'&destination='+destLat+','+destLng+ '&mode=driving&key=AIzaSyB0VZQy9-x8UEsjC6sTrQbRe5UohJn8fH0',
-      headers: { }
-    };
 
-    console.log("++++url",config.url)
-    await axios(config)
-    .then(function (response) { 
-
-        dirs = response.data
-        return response.data
-    }
-    )
-    .catch(function (error) {
-      console.log(error);
-    });
-
-    
-}
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -342,12 +323,30 @@ app.use("/addcarpooler", async(req, res)=>{
 
 app.use("/getdirections", async(req, res)=>{
     try{
-        const { source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
-        await googleMapDirection(source_latitude, source_longitude, destination_latitude, destination_longitude)
-        const directions =  dirs 
+        const { _id,source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
+        const directions = await googleMapDirections(source_latitude, source_longitude, destination_latitude, destination_longitude)
         console.log('=====>dirs'+  directions  )
-        res.status(200).json( directions )
 
+        const distance = await Traveler.findOneAndUpdate({_id:_id}, {distance:directions.routes[0].legs[0].distance.text})
+        const duration = await Traveler.findOneAndUpdate({_id:_id}, {duration:directions.routes[0].legs[0].duration.text})
+        loc = {
+            source:{
+                formatted_address: directions.routes[0].legs[0].start_address,
+                latitude: directions.routes[0].legs[0].start_location.lat,
+                longitude: directions.routes[0].legs[0].start_location.lng,
+            },
+            destination:{
+                formatted_address: directions.routes[0].legs[0].end_address,
+                latitude: directions.routes[0].legs[0].end_location.lat,
+                longitude: directions.routes[0].legs[0].end_location.lng,
+            },
+            directions: directions.routes[0].overview_polyline.points
+        }
+        const location = await Traveler.findOneAndUpdate({_id:_id}, {location:loc})
+    
+        console.log(update)
+        
+        res.status(200).json( directions )
     }
     catch(err){
         console.log(err)
@@ -355,6 +354,39 @@ app.use("/getdirections", async(req, res)=>{
 
     
 })
+
+app.use("/getdrivers", async(req, res)=>{
+    const { _id,source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
+
+    const drivers = Traveler.find({mode: "Driver"} )
+    let user = {
+        origin:{
+            latitude:source_latitude,
+            longitude:source_longitude,
+        },
+        destination:{
+            latitude:destination_latitude,
+            longitude:destination_longitude
+        }
+    }
+
+    let viableDrivers = []
+
+    await drivers.forEach((driver)=>{
+        let coords = decode(driver.location.directions)
+
+        let viability = checkCarpoolViability(coords, user)
+        if(viability == true)
+        {
+            viableDrivers.push(driver)
+        }
+
+
+    })
+    res.status(200).json(viableDrivers)
+ 
+    });
+
 
 ///For google login
 // const googleConfig={
