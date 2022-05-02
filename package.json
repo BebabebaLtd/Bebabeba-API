@@ -24,10 +24,11 @@
     "googleapis": "^95.0.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.2.3",
+    "node": "16.13.1",
     "passport": "^0.5.2",
     "passport-google-oauth": "^2.0.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.15"
+    "nodemon": "^2.0.16"
   }
 }

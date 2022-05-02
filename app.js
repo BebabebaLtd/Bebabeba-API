@@ -31,31 +31,29 @@ const Traveler = require("./model/traveler");
 const Message = require("./model/message")
 const user = require("./model/user");
 const Ride = require("./model/ride");
-const decode = require("./googledecode");
-const { checkCarpoolViability } = require("./checkCarpoolViability");
-
+const decode = require("./decode");
+const checkCarpoolViability = require("./checkCarpoolViability")
 //Register
 app.use("/register", async (req, res) =>{
     ///registration logic comes here
-   console.log("Hi")
     try{
-        console.log(req.body)
         const{first_name, last_name, email,phone,password} = req.body;
 
+
+        console.log(req.body)
         //validate user input
         if(!(email&&password&&first_name&&last_name&&phone)){
             return res.status(400).send("All input is required");
         }
 
-        console.log(User)
         // Check if user is required
         const usedEmail = await User.findOne({email});
 
         const usedPhone = await User.findOne({phone});
 
-        if(usedEmail||usedPhone){
-            return res.status(409).send("User Already Exist. Please Login")
-        }
+        // if(usedEmail||usedPhone){
+        //     return res.status(409).send("User Already Exist. Please Login")
+        // }
 
         encryptedPassword = await bcrypt.hash(password, 10);
         console.log(encryptedPassword);
@@ -68,27 +66,40 @@ app.use("/register", async (req, res) =>{
             email:email.toLowerCase(),
             phone,
             password:encryptedPassword
-        });
+        },
+        
 
-        const traveler = Traveler.create({
-            first_name,
-            last_name,
-            email:email.toLowerCase(),
-            phone,  
-        })
+        function(err, result){
+            console.log(result)
+            const traveler = Traveler.create({
+                user_id:result._id,
+                first_name,
+                last_name,
+                email:email.toLowerCase(),
+                phone,  
+            })
 
-        const token = jwt.sign(
-            {user_id : user.id, email,first_name,last_name,phone},
-            process.env.TOKEN_KEY,
-            {
-                expiresIn:"2h",
-            }
+
+            // console.log(traveler)
+
+            // const token = jwt.sign(
+            //     {user_id : result._id, email,first_name,last_name,phone},
+            //     process.env.TOKEN_KEY,
+            //     {
+            //         expiresIn:"2h",
+            //     }
+            // );
+
+            // user.token = token;
+
+            //return new user
+            res.status(201).json(result);
+        }
         );
 
-        user.token = token;
+        
 
-        //return new user
-        res.status(201).json(user);
+     
     }catch(err){
         console.log(err)
     }
@@ -134,7 +145,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/distance", async(req, res)=>{
     try{
-        const { _id, distance } = req.body
+        const {user_id, distance } = req.body
         console.log(req.body)
         const traveler = await Traveler.findOne({_id});
         console.log(traveler)
@@ -152,12 +163,9 @@ app.use("/distance", async(req, res)=>{
 
 app.use("/duration", async(req, res)=>{
     try{
-        const { _id, duration } = req.body
-        console.log(req.body)
-        const traveler = await Traveler.findOne({_id});
-        console.log(traveler)
+        const {user_id, duration } = req.body
+       
         const update = await Traveler.findOneAndUpdate({_id:_id}, {duration:duration})
-        // console.log(req.body)
         res.status(200).json(update)
 
     }
@@ -170,7 +178,7 @@ app.use("/duration", async(req, res)=>{
 
 app.use("/cost", async(req, res)=>{
     try{
-        const { _id, cost } = req.body
+        const { user_id, cost } = req.body
         console.log(req.body)
         const traveler = await Traveler.findOne({_id});
         console.log(traveler)
@@ -188,11 +196,11 @@ app.use("/cost", async(req, res)=>{
 
 app.use("/mode", async(req, res)=>{
     try{
-        const { _id, mode } = req.body
-        const traveler = await Traveler.findOne({_id});
-        const update = await Traveler.findOneAndUpdate({_id:_id}, {mode:mode})
+        const { user_id, mode } = req.body
 
-        console.log(update)
+
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {mode:mode})
+         
         res.status(200).json(update)
 
     }
@@ -203,13 +211,14 @@ app.use("/mode", async(req, res)=>{
     
 })
 
-app.use("/location", async(req, res)=>{
-    try{
-        const { _id, location } = req.body
-        const traveler = await Traveler.findOne({_id});
-        const update = await Traveler.findOneAndUpdate({_id:_id}, {location:location})
 
-        console.log(update)
+app.use("/setdirections", async(req, res)=>{
+    try{
+        const { user_id, mode } = req.body
+
+
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {directions:directions})
+         
         res.status(200).json(update)
 
     }
@@ -217,12 +226,41 @@ app.use("/location", async(req, res)=>{
         console.log(err)
     }
 
+    
+})
+
+app.use("/origin", async(req, res)=>{
+    try{
+        const { user_id, latitude, longitude } = req.body
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {$push:{origin:[latitude, longitude]}})
+
+        res.status(200).json(update)
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
+app.use("/destination", async(req, res)=>{
+    try{
+        const { user_id, latitude, longitude } = req.body
+        const update = await Traveler.findOneAndUpdate({_id:_id}, {$push:{destination:[latitude, longitude]}})
+
+        res.status(200).json(update)
+
+    }
+    catch(err){
+        console.log(err)
+    }
     
 })
 
 app.use("/departure", async(req, res)=>{
     try{
-        const { _id, departure } = req.body
+        const { user_id, departure } = req.body
         const traveler = await Traveler.findOne({_id});
         const update = await Traveler.findOneAndUpdate({_id:_id}, {departure:departure})
         console.log(update)
@@ -239,7 +277,7 @@ app.use("/departure", async(req, res)=>{
 
 app.use("/devicetoken", async(req, res)=>{
     try{
-        const { _id, devToken } = req.body
+        const { user_id, devToken } = req.body
         const traveler = await Traveler.findOne({_id});
         const update = await Traveler.findOneAndUpdate({_id:_id}, {devToken:devToken})
         console.log(update)
@@ -255,7 +293,7 @@ app.use("/devicetoken", async(req, res)=>{
 
 app.use("/setrideid", async(req, res)=>{
     try{
-        const { _id, currentRideId } = req.body
+        const { user_id, currentRideId } = req.body
         const traveler = await Traveler.findOne({_id});
         const update = await Traveler.findOneAndUpdate({_id:_id}, {currentRideId:currentRideId})
         console.log(update)
@@ -271,7 +309,7 @@ app.use("/setrideid", async(req, res)=>{
 
 app.use("/sendmessage", async(req, res)=>{
     try{
-        const { _id, messagetext, rideid } = req.body
+        const { user_id, messagetext, rideid } = req.body
 
         const message = Message.create({
             senderid:_id,
@@ -323,30 +361,15 @@ app.use("/addcarpooler", async(req, res)=>{
 
 app.use("/getdirections", async(req, res)=>{
     try{
-        const { _id,source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
+        const { user_id,source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
         const directions = await googleMapDirections(source_latitude, source_longitude, destination_latitude, destination_longitude)
-        console.log('=====>dirs'+  directions  )
+        const update = await Traveler.findOneAndUpdate({user_id:user_id}, {directions: directions.routes[0].overview_polyline.points})
+        const duration = await Traveler.findOneAndUpdate({user_id:user_id}, {duration: directions.routes[0].legs[0].duration.value})
+        const distance = await Traveler.findOneAndUpdate({user_id:user_id}, {distance: directions.routes[0].legs[0].distance.value})
 
-        const distance = await Traveler.findOneAndUpdate({_id:_id}, {distance:directions.routes[0].legs[0].distance.text})
-        const duration = await Traveler.findOneAndUpdate({_id:_id}, {duration:directions.routes[0].legs[0].duration.text})
-        loc = {
-            source:{
-                formatted_address: directions.routes[0].legs[0].start_address,
-                latitude: directions.routes[0].legs[0].start_location.lat,
-                longitude: directions.routes[0].legs[0].start_location.lng,
-            },
-            destination:{
-                formatted_address: directions.routes[0].legs[0].end_address,
-                latitude: directions.routes[0].legs[0].end_location.lat,
-                longitude: directions.routes[0].legs[0].end_location.lng,
-            },
-            directions: directions.routes[0].overview_polyline.points
-        }
-        const location = await Traveler.findOneAndUpdate({_id:_id}, {location:loc})
     
-        console.log(update)
         
-        res.status(200).json( directions )
+        res.status(200).json(directions)
     }
     catch(err){
         console.log(err)
@@ -355,10 +378,10 @@ app.use("/getdirections", async(req, res)=>{
     
 })
 
-app.use("/getdrivers", async(req, res)=>{
-    const { _id,source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
 
-    const drivers = Traveler.find({mode: "Driver"} )
+app.use("/getdrivers", async(req, res)=>{
+
+    const { user_id,source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
     let user = {
         origin:{
             latitude:source_latitude,
@@ -369,22 +392,41 @@ app.use("/getdrivers", async(req, res)=>{
             longitude:destination_longitude
         }
     }
-
-    let viableDrivers = []
-
-    await drivers.forEach((driver)=>{
-        let coords = decode(driver.location.directions)
-
-        let viability = checkCarpoolViability(coords, user)
-        if(viability == true)
+    const drivers = Traveler.find({mode: "Driver"}, function(err, result){
+        if(err)
         {
-            viableDrivers.push(driver)
+            console.log(err)
         }
+        else{
+            let viableDrivers = []
+
+            console.log(result)
+                result.forEach((driver)=>{
+
+                    let coords = decode(driver.directions)
 
 
-    })
-    res.status(200).json(viableDrivers)
- 
+                    try{
+
+                        let viability = checkCarpoolViability(coords, user)
+                        if(viability == true)
+                        {
+                            viableDrivers.push(driver)
+                        }
+    
+                    }
+                    catch(e){
+                        throw(e)
+
+                    }
+
+                   
+
+                })
+
+            res.status(200).json(viableDrivers)
+        }
+    }) 
     });
 
 
