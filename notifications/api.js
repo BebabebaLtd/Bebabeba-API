@@ -7,8 +7,9 @@ const FCM = require('fcm-node')
 
 
 router.post("/sendnotification",async(req, res)=>{
-    const {title , text, token  }  = req.body
+    const {title , msg, user_id,token  }  = req.body
 
+    console.log(req.body)
     const serverKey = require("../rydr-aff11-firebase-adminsdk-a30ws-a8274d05d9.json")
     const fcm = new FCM(serverKey);
 
@@ -16,12 +17,12 @@ router.post("/sendnotification",async(req, res)=>{
         to: token, 
         notification: {
             title: title, 
-            body: 'Body of your push notification' 
+            body: String(msg)
         },
         
         data: {  //you can send only notification or only data(or include both)
             my_key: 'my value',
-            my_another_key: 'my another value'
+            user_id: user_id
         }
     };
 
