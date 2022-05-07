@@ -1,6 +1,5 @@
 require("dotenv").config();
 require("./config/database").connect();
-
 // const google = require("googleapis")
 const { GOOGLE_CLIENT_ID } = process.env
 const { GOOGLE_CLIENT_SECRET } = process.env
@@ -31,11 +30,13 @@ const Traveler = require("./model/traveler");
 const Message = require("./model/message")
 const user = require("./model/user");
 const Ride = require("./model/ride");
+const Vehicle = require("./model/vehicle")
 const decode = require("./decode");
 const checkCarpoolViability = require("./checkCarpoolViability")
 //Register
 app.use("/register", async (req, res) =>{
     ///registration logic comes here
+    console.log("first")
     try{
         const{first_name, last_name, email,phone,password} = req.body;
 
@@ -46,14 +47,14 @@ app.use("/register", async (req, res) =>{
             return res.status(400).send("All input is required");
         }
 
-        // Check if user is required
+        // Check if user is preset
         const usedEmail = await User.findOne({email});
 
         const usedPhone = await User.findOne({phone});
 
-        // if(usedEmail||usedPhone){
-        //     return res.status(409).send("User Already Exist. Please Login")
-        // }
+        if(usedEmail||usedPhone){
+            return res.status(409).send("User Already Exist. Please Login")
+        }
 
         encryptedPassword = await bcrypt.hash(password, 10);
         console.log(encryptedPassword);
@@ -67,8 +68,6 @@ app.use("/register", async (req, res) =>{
             phone,
             password:encryptedPassword
         },
-        
-
         function(err, result){
             console.log(result)
             const traveler = Traveler.create({
@@ -80,7 +79,6 @@ app.use("/register", async (req, res) =>{
             })
 
 
-            // console.log(traveler)
 
             // const token = jwt.sign(
             //     {user_id : result._id, email,first_name,last_name,phone},
@@ -199,7 +197,7 @@ app.use("/mode", async(req, res)=>{
         const { user_id, mode } = req.body
 
 
-        const update = await Traveler.findOneAndUpdate({_id:_id}, {mode:mode})
+        const update = await Traveler.findOneAndUpdate({user_id:user_id}, {mode:mode})
          
         res.status(200).json(update)
 
@@ -278,8 +276,7 @@ app.use("/departure", async(req, res)=>{
 app.use("/devicetoken", async(req, res)=>{
     try{
         const { user_id, devToken } = req.body
-        const traveler = await Traveler.findOne({_id});
-        const update = await Traveler.findOneAndUpdate({_id:_id}, {devToken:devToken})
+        const update = await Traveler.findOneAndUpdate({user_id:user_id}, {devToken:devToken})
         console.log(update)
         res.status(200).json(update)
 
@@ -344,6 +341,26 @@ app.use("/createride", async(req, res)=>{
     
 })
 
+
+app.use("/register-vehicle", async(req, res)=>{
+    try{
+        const { user_id, front_image, back_image, left_image, right_image, plate_image, dashboard_image, seats_image} = req.body
+        const vehicle = Vehicle.create(req.body,
+            function(err, result){
+                res.status(200).json(result)
+
+            }
+            )
+       
+
+    }
+    catch(err){
+        console.log(err)
+    }
+
+    
+})
+
 app.use("/addcarpooler", async(req, res)=>{
     try{
         const { _id, carpooler } = req.body
@@ -360,6 +377,7 @@ app.use("/addcarpooler", async(req, res)=>{
 })
 
 app.use("/getdirections", async(req, res)=>{
+
     try{
         const { user_id,source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
         const directions = await googleMapDirections(source_latitude, source_longitude, destination_latitude, destination_longitude)
@@ -375,23 +393,26 @@ app.use("/getdirections", async(req, res)=>{
         console.log(err)
     }
 
+
+  
     
 })
 
 
 app.use("/getdrivers", async(req, res)=>{
 
-    const { user_id,source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
+    const { source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
+
     let user = {
-        origin:{
-            latitude:source_latitude,
-            longitude:source_longitude,
-        },
-        destination:{
-            latitude:destination_latitude,
-            longitude:destination_longitude
-        }
-    }
+                    origin:{
+                        latitude:source_latitude,
+                        longitude:source_longitude,
+                    },
+                    destination:{
+                        latitude:destination_latitude,
+                        longitude:destination_longitude
+                    }
+                }
     const drivers = Traveler.find({mode: "Driver"}, function(err, result){
         if(err)
         {
@@ -400,7 +421,6 @@ app.use("/getdrivers", async(req, res)=>{
         else{
             let viableDrivers = []
 
-            console.log(result)
                 result.forEach((driver)=>{
 
                     let coords = decode(driver.directions)
@@ -419,9 +439,6 @@ app.use("/getdrivers", async(req, res)=>{
                         throw(e)
 
                     }
-
-                   
-
                 })
 
             res.status(200).json(viableDrivers)
@@ -429,6 +446,11 @@ app.use("/getdrivers", async(req, res)=>{
     }) 
     });
 
+
+
+
+
+app.use("/send", require('./notifications/api') )
 
 ///For google login
 // const googleConfig={

@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js",
-    "dev": "nodemon index.js"
+    "start": "node index.js",
+    "dev": "node index.js"
   },
   "keywords": [],
   "author": "",
@@ -19,12 +19,15 @@
     "ejs": "^3.1.6",
     "express": "^4.17.3",
     "express-session": "^1.17.2",
+    "fcm-node": "^1.6.1",
     "geolib": "^3.3.3",
     "google-polyline": "^1.0.3",
     "googleapis": "^95.0.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.2.3",
     "node": "16.13.1",
+    "node-fetch": "^3.2.4",
+    "nodemon": "^2.0.16",
     "passport": "^0.5.2",
     "passport-google-oauth": "^2.0.0"
   },

@@ -1,4 +1,4 @@
 apps:
-- name: tryp
-  host: https://tryp.eu-gb.cf.appdomain.cloud/
-  memory: 128M
+- name: wabebe
+  random-route: true
+  memory: 256M
