@@ -5,10 +5,32 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const router = express.Router()
 const FCM = require('fcm-node')
 
+const Traveler = require("../model/traveler");
+const User = require("../model/user")
+
 
 router.post("/sendnotification",async(req, res)=>{
-    const {title , msg, user_id,token  }  = req.body
+    console.log(req.body)
+    const {title , msg, user_id,token , price, time, duration, seats, name,distance,notification_type }  = req.body
+    let return_token = ''
+    try{
+        const user = await User.findOne({user_id});
+        console.log("The user",user)
 
+
+
+        const traveler = await Traveler.findOne({user_id})
+        console.log("The traveler is",traveler)
+
+
+        return_token = traveler.devToken
+        console.log("The return token is",return_token)
+
+    }
+    catch(e){
+        console.log(e)
+    }
+    
     console.log(req.body)
     const serverKey = require("../rydr-aff11-firebase-adminsdk-a30ws-a8274d05d9.json")
     const fcm = new FCM(serverKey);
@@ -17,13 +39,22 @@ router.post("/sendnotification",async(req, res)=>{
         to: token, 
         notification: {
             title: title, 
-            body: String(msg)
-        },
-        
-        data: {  //you can send only notification or only data(or include both)
+            body: String(msg),
+            tag:String(notification_type),
+        },  
+        data: { 
             my_key: 'my value',
-            user_id: user_id
+            user_id: String(user_id),
+            price: String(price),
+            duration: String(duration),
+            time: String(time),
+            notification_type:String(notification_type),
+            seats:String(seats),
+            name:String(name),
+            distance:String(distance),
+            return_token:String(return_token)
         }
+    
     };
 
     fcm.send(message, function(err, response){
@@ -36,28 +67,6 @@ router.post("/sendnotification",async(req, res)=>{
     });
 
   
-
-    // console.log(title, text)
-
-    
-    // const tokens = ["dW1k5yKIS8G5E7h_cgcQ2J:APA91bEXsfWjB0qTnp_KrGK7ib9QAu7YjTlWi1-YB50o9dr1Lm7bfaI7_g-YRe1xT3_eVbUgzNZ09V79Pm0vzIxXsPfcd04nsZp313J-LKY6Ynaz1Qar9jEEppCN8-IZWgX_IGfM4lpZ"]
-    // var notification_body = {
-    //     notification:notification,
-    //     registration_ids:tokens
-    // }
-
-    // console.log(notification_body)
-    // const response = await fetch("https://fcm.googleapis.com/fcm/send",{
-    //     "method":"POST",
-    //     "headers":
-    //     {
-    //         "Authorization":"key=AAAAn3pNfKE:APA91bH4Zo52V1omevWd6trmBo_VHEX4eagwcfVHy8YhB1jvAs66KRQ-ObNa_rZ4xWAGUn1Ci_5dS2kLnPuHGiYRcMP5aNfXECqgL69lLD-bZfCeGESpvBqA3UPfo4zUTor734BITvuC",
-    //         "Content-Type":"application/json"
-    //     },
-    //     "body":JSON.stringify(notification_body)
-    // })
-    // console.log(response.status )
-
 
 
 })
