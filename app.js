@@ -11,7 +11,7 @@ const app = express();
 const passport = require('passport')
 const bodyParser = require("body-parser");
 const axios = require('axios')
-
+const FCM = require('fcm-node')
 const googleMapDirections = require('./googleMapDirections')
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -135,6 +135,18 @@ app.use("/login", async(req, res)=>{
         console.log(err)
 
     }
+})
+
+app.use("/get-user-details", async(req,res)=>{
+    const { user_id } = req.body
+
+    const user = User.findOne({user_id})
+    const traveler = Traveler.findOne({user_id})
+    const vehicle = Vehicle.findOne({user_id})
+
+    const return_data = {...user, ...traveler, ...vehicle}
+
+    res.status(200).json(return_data)
 })
 
 
