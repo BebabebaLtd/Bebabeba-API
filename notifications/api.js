@@ -11,7 +11,8 @@ const User = require("../model/user")
 
 router.post("/sendnotification",async(req, res)=>{
     console.log(req.body)
-    const {title , msg, user_id,token , price, time, duration, seats, name,distance,notification_type }  = req.body
+    // const {title , msg, user_id,token , price, time, duration, seats, name,distance,notification_type }  = req.body
+    const {title , msg, user_id,token , data }  = req.body
     let return_token = ''
     try{
         const user = await User.findOne({user_id});
@@ -42,18 +43,19 @@ router.post("/sendnotification",async(req, res)=>{
             body: String(msg),
             tag:String(notification_type),
         },  
-        data: { 
-            my_key: 'my value',
-            user_id: String(user_id),
-            price: String(price),
-            duration: String(duration),
-            time: String(time),
-            notification_type:String(notification_type),
-            seats:String(seats),
-            name:String(name),
-            distance:String(distance),
-            return_token:String(return_token)
-        }
+        data:data
+        // data: { 
+        //     my_key: 'my value',
+        //     user_id: String(user_id),
+        //     price: String(price),
+        //     duration: String(duration),
+        //     time: String(time),
+        //     notification_type:String(notification_type),
+        //     seats:String(seats),
+        //     name:String(name),
+        //     distance:String(distance),
+        //     return_token:String(return_token)
+        // }
     
     };
 
