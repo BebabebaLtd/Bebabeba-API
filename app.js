@@ -140,9 +140,19 @@ app.use("/login", async(req, res)=>{
 app.use("/get-user-details", async(req,res)=>{
     const { user_id } = req.body
 
-    const user = User.findOne({user_id})
-    const traveler = Traveler.findOne({user_id})
-    const vehicle = Vehicle.findOne({user_id})
+    let user
+    let traveler
+    let vehicle
+    try{
+       user = User.findOne({user_id})
+       traveler = Traveler.findOne({user_id})
+       vehicle = Vehicle.findOne({user_id})
+    }
+    catch(e){
+        res.status(203).json(e)
+
+    }
+    
 
     const return_data = {...user, ...traveler, ...vehicle}
 
