@@ -9,6 +9,9 @@ const vehicleSchema = new mongoose.Schema({
     plate_image:{type:String, default:""},
     dashboard_image:{type:String, default:""},
     seats_image:{type:String, default:""},
+    model:{type:String, default:""},
+    number_plate:{type:String, default:""},
+    color:{type:String, default:""}
 });
 
 module.exports  = mongoose.model("vehicle", vehicleSchema);

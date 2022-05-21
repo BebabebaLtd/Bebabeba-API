@@ -12,7 +12,12 @@ const passport = require('passport')
 const bodyParser = require("body-parser");
 const axios = require('axios')
 const FCM = require('fcm-node')
+const AccessToken = require('twilio').jwt.AccessToken;
+const VoiceGrant = AccessToken.VoiceGrant;
 const googleMapDirections = require('./googleMapDirections')
+
+
+
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -21,6 +26,52 @@ app.use(bodyParser.json());
 app.use("/welcome", (req,res)=>{
     res.status(200).send("Welcome");
 });
+
+app.use("/get-twilio-token", async (req,res)=>{
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const client = require('twilio')(accountSid, authToken);
+
+    console.log(accountSid)
+    console.log(authToken)
+    client.calls
+
+        .create({
+            url: 'http://demo.twilio.com/docs/voice.xml',
+            to: '+254726539744',
+            from: '+15005550006'
+        })
+      .then(call =>
+        {
+            res.status(200).send(call)
+
+        })
+    .catch((err)=>{
+        res.status(400).send(err)
+
+    })
+    // const ChatGrant = AccessToken.ChatGrant;
+    // const { TWILIO_ACCOUNT_SID } = process.env
+    // const { TWILIO_AUTH_TOKEN } = process.env
+    // const { TWILIO_SECRET } = process.env
+    // const { TWILIO_APP_SID } = process.env
+
+    // const voiceGrant = new VoiceGrant({
+    //     outgoingApplicationSid : TWILIO_APP_SID,
+    //     incoming: "allow"
+    // })
+    // const token = new AccessToken(
+    //     TWILIO_ACCOUNT_SID,
+    //     TWILIO_AUTH_TOKEN,
+    //     TWILIO_SECRET,
+        
+    //     {identity:"RydrKey"}
+    // )
+
+    // token.addGrant(voiceGrant)
+
+
+})
 
 
 
@@ -53,11 +104,16 @@ app.use("/register", async (req, res) =>{
         const usedPhone = await User.findOne({phone});
 
         if(usedEmail||usedPhone){
-            return res.status(409).send("User Already Exist. Please Login")
+            return res.status(409).send("User Already Exists. Please Login")
         }
 
-        encryptedPassword = await bcrypt.hash(password, 10);
-        console.log(encryptedPassword);
+        let encryptedPassword
+        if(password)
+        {
+            encryptedPassword = await bcrypt.hash(password, 10);
+            console.log(encryptedPassword);
+        }
+        
 
 
 
@@ -103,6 +159,10 @@ app.use("/register", async (req, res) =>{
     }
 });
 
+app.use("/create-user", async(req, res)=>{
+
+})
+
 
 //Login
 app.use("/login", async(req, res)=>{
@@ -112,12 +172,13 @@ app.use("/login", async(req, res)=>{
         if(!(emailorphone&&password)){
             res.status(400).send("All input is required");
         }
+        console.log(req.body)
         const userEmail = await User.findOne({emailorphone});
         const userPhone = await User.findOne({emailorphone})
 
         if((userEmail && (await bcrypt.compare(password, userEmail.password)))|| userPhone && (await bcrypt.compare(password, userPhone.password))){
             const token = jwt.sign(
-                {user_id : emailorphone },
+                {user_id : userEmail._id, first_name: userEmail.first_name, last_name: userEmail.last_name, email: userEmail.email, phone: userEmail.phone  },
                 process.env.TOKEN_KEY,
                 {
                     expiresIn:"2h",
@@ -137,24 +198,32 @@ app.use("/login", async(req, res)=>{
     }
 })
 
-app.use("/get-user-details", async(req,res)=>{
+app.use("/getuserdetails", async(req,res)=>{
     const { user_id } = req.body
+    console.log(req.body)
 
     let user
     let traveler
     let vehicle
     try{
-       user = User.findOne({user_id})
-       traveler = Traveler.findOne({user_id})
-       vehicle = Vehicle.findOne({user_id})
+       user = await User.findOne({user_id})
+       traveler = await Traveler.findOne({user_id})
+       vehicle = await Vehicle.findOne({user_id})
     }
     catch(e){
         res.status(203).json(e)
 
     }
+
+    
     
 
-    const return_data = {...user, ...traveler, ...vehicle}
+    const return_data = {
+        user:user,
+        traveler:traveler,
+        vehicle:vehicle
+    }
+    console.log(return_data)
 
     res.status(200).json(return_data)
 })
@@ -347,20 +416,45 @@ app.use("/sendmessage", async(req, res)=>{
 })
 
 app.use("/createride", async(req, res)=>{
+    const {driver_id} = req.body
     try{
 
         const ride = Ride.create({
+            driver_id:driver_id,
+            status:"booked"
+        }, function(err, result){
+            if(err)
+            {
+                res.status(400).json(err)
+            }
+            else{
+                res.status(200).json(result)
+            }
 
         })
-        console.log(ride)
-        res.status(200).json(ride)
+        
 
     }
     catch(err){
-        console.log(err)
+        res.status(400).json(err)
     }
 
     
+})
+
+app.use("/updateride", async(req,res)=>{
+    const { id,status ,member_id } = req.body
+    try{
+        if(status )
+        {
+            const ride = await Ride.findOneAndUpdate({_id:id},{status:status})
+            res.status(200).json(ride)
+        }
+        
+    }
+    catch(e){
+        res.status(400).json(err)
+    }
 })
 
 
@@ -386,7 +480,6 @@ app.use("/register-vehicle", async(req, res)=>{
 app.use("/addcarpooler", async(req, res)=>{
     try{
         const { _id, carpooler } = req.body
-        const ride = await Ride.findOne({_id});
         const update = await Ride.findOneAndUpdate({id:_id}, {$push: {carpoolers: carpooler}})
         res.status(200).json(update)
 

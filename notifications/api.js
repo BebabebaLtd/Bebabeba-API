@@ -9,6 +9,8 @@ const Traveler = require("../model/traveler");
 const User = require("../model/user")
 
 
+const serverKey = require("../rydr-aff11-firebase-adminsdk-a30ws-a8274d05d9.json")
+const fcm = new FCM(serverKey);
 router.post("/sendnotification",async(req, res)=>{
     console.log(req.body)
     // const {title , msg, user_id,token , price, time, duration, seats, name,distance,notification_type }  = req.body
@@ -33,38 +35,30 @@ router.post("/sendnotification",async(req, res)=>{
     }
     
     console.log(req.body)
-    const serverKey = require("../rydr-aff11-firebase-adminsdk-a30ws-a8274d05d9.json")
-    const fcm = new FCM(serverKey);
 
-    var message = { //this may vary according to the message type (single recipient, multicast, topic, et cetera)
+    data["return_token"] = return_token
+    
+
+    var message = {
         to: token, 
         notification: {
             title: title, 
             body: String(msg),
-            tag:String(notification_type),
         },  
         data:data
-        // data: { 
-        //     my_key: 'my value',
-        //     user_id: String(user_id),
-        //     price: String(price),
-        //     duration: String(duration),
-        //     time: String(time),
-        //     notification_type:String(notification_type),
-        //     seats:String(seats),
-        //     name:String(name),
-        //     distance:String(distance),
-        //     return_token:String(return_token)
-        // }
+        
     
     };
 
+    
     fcm.send(message, function(err, response){
         if (err) {
             console.log("Something has gone wrong!");
             console.log(err)
+            res.status(400).json(err)
         } else {
             console.log("Successfully sent with response: ", response);
+            res.status(200).json(response)
         }
     });
 
