@@ -7,9 +7,11 @@ const FCM = require('fcm-node')
 
 const Traveler = require("../model/traveler");
 const User = require("../model/user")
+const Message = require("../model/message")
 
 
-const serverKey = require("../rydr-aff11-firebase-adminsdk-a30ws-a8274d05d9.json")
+const serverKey = require("../rydr-aff11-firebase-adminsdk-a30ws-a8274d05d9.json");
+const message = require("../model/message");
 const fcm = new FCM(serverKey);
 router.post("/sendnotification",async(req, res)=>{
     console.log(req.body)
@@ -67,4 +69,65 @@ router.post("/sendnotification",async(req, res)=>{
 
 })
 
+router.post("/sendmessage", async(req,res)=>{
+    console.log(req.body)
+    const {ride_id, user_id, message, user_name } = req.body
+    const msg = Message.create({
+        ride_id: ride_id,
+        user_id: user_id,
+        message : message,
+        user_name: user_name
+    },
+    function(err, result){
+        if(err){
+            console.log(err)
+            res.status(400).send(err)
+        }
+        else{
+
+
+            var msg = {
+                
+                topic: String(ride_id), 
+                notification: {
+                    title: user_name, 
+                    body: String(message),
+                }
+            };
+        
+            
+            fcm.send(msg, function(err, response){
+                console.log(msg)
+                if (err) {
+                    console.log("Something has gone wrong!");
+                    console.log(err)
+                    // res.status(400).json(err)
+                } else {
+                    console.log("Successfully sent with response: ", response);
+                }
+            });
+            console.log(result)
+            res.status(200).json(result)
+
+        }
+    })
+})
+
+
+router.use("/messages", (req,res)=>{
+  const  { ride_id } = req.body
+
+  console.log(req.body)
+  const messages = Message.find({ride_id:ride_id},
+    function(err, result){
+        if(err)
+        {
+            res.status(400).send("No Messages to show")
+        }
+        else{
+            console.log(result)
+            res.status(200).send(result)
+        }
+    })
+})
 module.exports = router;

@@ -12,8 +12,8 @@ const passport = require('passport')
 const bodyParser = require("body-parser");
 const axios = require('axios')
 const FCM = require('fcm-node')
-const AccessToken = require('twilio').jwt.AccessToken;
-const VoiceGrant = AccessToken.VoiceGrant;
+// const AccessToken = require('twilio').jwt.AccessToken;
+// const VoiceGrant = AccessToken.VoiceGrant;
 const googleMapDirections = require('./googleMapDirections')
 
 
@@ -27,51 +27,51 @@ app.use("/welcome", (req,res)=>{
     res.status(200).send("Welcome");
 });
 
-app.use("/get-twilio-token", async (req,res)=>{
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const client = require('twilio')(accountSid, authToken);
+// app.use("/get-twilio-token", async (req,res)=>{
+//     const accountSid = process.env.TWILIO_ACCOUNT_SID;
+//     const authToken = process.env.TWILIO_AUTH_TOKEN;
+//     const client = require('twilio')(accountSid, authToken);
 
-    console.log(accountSid)
-    console.log(authToken)
-    client.calls
+//     console.log(accountSid)
+//     console.log(authToken)
+//     client.calls
 
-        .create({
-            url: 'http://demo.twilio.com/docs/voice.xml',
-            to: '+254726539744',
-            from: '+15005550006'
-        })
-      .then(call =>
-        {
-            res.status(200).send(call)
+//         .create({
+//             url: 'http://demo.twilio.com/docs/voice.xml',
+//             to: '+254726539744',
+//             from: '+15005550006'
+//         })
+//       .then(call =>
+//         {
+//             res.status(200).send(call)
 
-        })
-    .catch((err)=>{
-        res.status(400).send(err)
+//         })
+//     .catch((err)=>{
+//         res.status(400).send(err)
 
-    })
-    // const ChatGrant = AccessToken.ChatGrant;
-    // const { TWILIO_ACCOUNT_SID } = process.env
-    // const { TWILIO_AUTH_TOKEN } = process.env
-    // const { TWILIO_SECRET } = process.env
-    // const { TWILIO_APP_SID } = process.env
+//     })
+//     // const ChatGrant = AccessToken.ChatGrant;
+//     // const { TWILIO_ACCOUNT_SID } = process.env
+//     // const { TWILIO_AUTH_TOKEN } = process.env
+//     // const { TWILIO_SECRET } = process.env
+//     // const { TWILIO_APP_SID } = process.env
 
-    // const voiceGrant = new VoiceGrant({
-    //     outgoingApplicationSid : TWILIO_APP_SID,
-    //     incoming: "allow"
-    // })
-    // const token = new AccessToken(
-    //     TWILIO_ACCOUNT_SID,
-    //     TWILIO_AUTH_TOKEN,
-    //     TWILIO_SECRET,
+//     // const voiceGrant = new VoiceGrant({
+//     //     outgoingApplicationSid : TWILIO_APP_SID,
+//     //     incoming: "allow"
+//     // })
+//     // const token = new AccessToken(
+//     //     TWILIO_ACCOUNT_SID,
+//     //     TWILIO_AUTH_TOKEN,
+//     //     TWILIO_SECRET,
         
-    //     {identity:"RydrKey"}
-    // )
+//     //     {identity:"RydrKey"}
+//     // )
 
-    // token.addGrant(voiceGrant)
+//     // token.addGrant(voiceGrant)
 
 
-})
+// })
 
 
 
@@ -82,6 +82,7 @@ const Message = require("./model/message")
 const user = require("./model/user");
 const Ride = require("./model/ride");
 const Vehicle = require("./model/vehicle")
+const Otp = require("./model/otp")
 const decode = require("./decode");
 const checkCarpoolViability = require("./checkCarpoolViability")
 //Register
@@ -164,6 +165,7 @@ app.use("/create-user", async(req, res)=>{
 })
 
 
+
 //Login
 app.use("/login", async(req, res)=>{
     ///login logic
@@ -198,6 +200,63 @@ app.use("/login", async(req, res)=>{
     }
 })
 
+
+app.use("/phone-login", async(req,res)=>{
+    const { phone:phone, code:code} = req.body
+
+    try{
+        Otp.findOneAndDelete({phone:phone,otp:code},
+            function async(err,result){
+                if(result){
+
+                    Traveler.findOne({phone:phone}, function(err,result){
+                        if(result){
+                            console.log( process.env.TOKEN_KEY)
+                            const token = jwt.sign(result.toJSON(), process.env.TOKEN_KEY , {expiresIn:604800});
+                            res.status(200).send(token)
+                            
+                        }
+                        else{
+                            res.status(400).send("No user found")
+ 
+                        }
+                    })
+                   
+                }
+                else{
+                    console.log("Error")
+                    res.status(400).send("Error")
+                }
+            })
+    }
+    catch(e){
+     console.log(e)
+    }
+})
+
+app.use("/create-otp", async(req,res)=>{
+    const { phone } = req.body
+
+    const code = Math.floor(1000 + Math.random() * 9000)
+    try{
+
+        await Otp.findOneAndDelete({phone:phone})
+
+        const otp = await Otp.create({
+            phone:phone,
+            otp: code
+        }
+        )
+
+        res.status(200).send(otp)
+
+
+    }
+    catch(e){
+        res.status(400).send(e)
+    }
+})
+
 app.use("/getuserdetails", async(req,res)=>{
     const { user_id } = req.body
     console.log(req.body)
@@ -227,6 +286,8 @@ app.use("/getuserdetails", async(req,res)=>{
 
     res.status(200).json(return_data)
 })
+
+
 
 
 
@@ -299,6 +360,23 @@ app.use("/mode", async(req, res)=>{
 
     
 })
+
+app.use("/messages", async(req,res)=>{
+
+    const  { ride_id } = req.body
+    console.log(req.body)
+
+    try{
+        const messages = await Message.find({ride_id:ride_id})
+        res.status(200).send(messages)
+    }
+    catch(e){
+        res.status(400).send("No Messages to show")
+        console.log(e)
+
+    }
+    
+  })
 
 
 app.use("/setdirections", async(req, res)=>{
@@ -490,6 +568,8 @@ app.use("/addcarpooler", async(req, res)=>{
     }
 
 })
+
+
 
 app.use("/getdirections", async(req, res)=>{
 
