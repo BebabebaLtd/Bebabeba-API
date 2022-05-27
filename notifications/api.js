@@ -52,6 +52,8 @@ router.post("/sendnotification",async(req, res)=>{
     
     };
 
+    console.log(message)
+
     
     fcm.send(message, function(err, response){
         if (err) {
@@ -88,12 +90,13 @@ router.post("/sendmessage", async(req,res)=>{
 
             var msg = {
                 
-                topic: String(ride_id), 
+                to: `/topics/${String(ride_id)}`, 
                 notification: {
-                    title: user_name, 
-                    body: String(message),
+                    title:  user_name, 
+                    body: message,
                 }
             };
+            console.log(msg)
         
             
             fcm.send(msg, function(err, response){

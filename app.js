@@ -84,7 +84,8 @@ const Ride = require("./model/ride");
 const Vehicle = require("./model/vehicle")
 const Otp = require("./model/otp")
 const decode = require("./decode");
-const checkCarpoolViability = require("./checkCarpoolViability")
+const checkCarpoolViability = require("./checkCarpoolViability");
+const { findOneAndUpdate } = require("./model/traveler");
 //Register
 app.use("/register", async (req, res) =>{
     ///registration logic comes here
@@ -204,6 +205,8 @@ app.use("/login", async(req, res)=>{
 app.use("/phone-login", async(req,res)=>{
     const { phone:phone, code:code} = req.body
 
+
+    console.log(req.body)
     try{
         Otp.findOneAndDelete({phone:phone,otp:code},
             function async(err,result){
@@ -217,7 +220,7 @@ app.use("/phone-login", async(req,res)=>{
                             
                         }
                         else{
-                            res.status(400).send("No user found")
+                            res.status(201).send("No user found")
  
                         }
                     })
@@ -237,9 +240,41 @@ app.use("/phone-login", async(req,res)=>{
 app.use("/create-otp", async(req,res)=>{
     const { phone } = req.body
 
+
+    console.log(req.body)
+
     const code = Math.floor(1000 + Math.random() * 9000)
     try{
 
+        const usr = await User.findOne({phone:phone})
+        console.log(usr)
+
+        if(usr){
+            await Otp.findOneAndDelete({phone:phone})
+
+            const otp = await Otp.create({
+                phone:phone,
+                otp: code
+            }
+            )
+    
+            res.status(200).send(otp)
+        }
+        else{
+            await Otp.findOneAndDelete({phone:phone})
+
+            const otp = await Otp.create({
+                phone:phone,
+                otp: code
+            }
+            )
+            res.status(400).send("No user found") 
+        }
+        
+
+
+    }
+    catch(e){
         await Otp.findOneAndDelete({phone:phone})
 
         const otp = await Otp.create({
@@ -247,12 +282,54 @@ app.use("/create-otp", async(req,res)=>{
             otp: code
         }
         )
+        res.status(400).send(e)
+    }
+})
 
-        res.status(200).send(otp)
+app.use("/createuser", async(req,res)=>{
+    const {phone, first_name, last_name, id_number} = req.body
 
 
+    console.log(req.body)
+    try{
+        User.create({
+            phone:phone,
+            first_name:first_name,
+            last_name:last_name,
+            id_number:id_number
+        }, function(err, result){
+            if(result){
+                console.log(result)
+               
+                Traveler.create({
+                    user_id:result._id,
+                    first_name:result.first_name,
+                    last_name:result.last_name,
+                    phone: result.phone,  
+                },
+                function(err,result){
+                    if(result){
+                        console.log( process.env.TOKEN_KEY)
+                        const token = jwt.sign(result.toJSON(), process.env.TOKEN_KEY);
+                        res.status(200).send(token)
+                        
+                    }
+                    else{
+                        res.status(201).send("No user found")
+
+                    }
+                })
+
+
+            }
+            else{
+                console.log(err)
+                res.status(400).send(err)
+            }
+        })
     }
     catch(e){
+        console.log(e)
         res.status(400).send(e)
     }
 })
@@ -265,9 +342,9 @@ app.use("/getuserdetails", async(req,res)=>{
     let traveler
     let vehicle
     try{
-       user = await User.findOne({user_id})
-       traveler = await Traveler.findOne({user_id})
-       vehicle = await Vehicle.findOne({user_id})
+       user = await User.findOne({_id:user_id})
+       traveler = await Traveler.findOne({user_id:user_id})
+       vehicle = await Vehicle.findOne({user_id:user_id})
     }
     catch(e){
         res.status(203).json(e)
@@ -399,24 +476,27 @@ app.use("/setdirections", async(req, res)=>{
 app.use("/origin", async(req, res)=>{
     try{
         const { user_id, latitude, longitude } = req.body
-        const update = await Traveler.findOneAndUpdate({_id:_id}, {$push:{origin:[latitude, longitude]}})
+        const lat = await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{origin:latitude}})
+        const lng =await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{origin:longitude}})
 
-        res.status(200).json(update)
+
+        res.status(200).json(lng)
 
     }
     catch(err){
         console.log(err)
     }
-
     
 })
 
 app.use("/destination", async(req, res)=>{
     try{
         const { user_id, latitude, longitude } = req.body
-        const update = await Traveler.findOneAndUpdate({_id:_id}, {$push:{destination:[latitude, longitude]}})
+        const lat = await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{destination:latitude}})
+        const lng =await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{destination:longitude}})
 
-        res.status(200).json(update)
+
+        res.status(200).json(lng)
 
     }
     catch(err){
@@ -593,6 +673,16 @@ app.use("/getdirections", async(req, res)=>{
     
 })
 
+app.use("/setorigin", async(req,res)=>{
+    const {user_id ,source_latitude, source_longitude } = req.body
+
+    try{
+        await findOneAndUpdate({user_id:user_id},)
+    }
+    catch(e){
+
+    }
+})
 
 app.use("/getdrivers", async(req, res)=>{
 
