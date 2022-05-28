@@ -18,9 +18,10 @@ const googleMapDirections = require('./googleMapDirections')
 
 
 
-
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.json());
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 
 
 app.use("/welcome", (req,res)=>{
@@ -367,9 +368,6 @@ app.use("/getuserdetails", async(req,res)=>{
 
 
 
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/distance", async(req, res)=>{
     try{
         const {user_id, distance } = req.body
@@ -586,7 +584,20 @@ app.use("/createride", async(req, res)=>{
                 res.status(400).json(err)
             }
             else{
-                res.status(200).json(result)
+                
+                Ride.findOneAndUpdate({id:result._id}, {$push: {carpoolers: driver_id}},
+                    function(err, result)
+                    {
+                        if(err){
+                            res.status(400).json(err)
+                        }
+                        if(result){
+                            res.status(200).json(result)
+                        }
+                    })
+                   
+
+
             }
 
         })
@@ -598,6 +609,24 @@ app.use("/createride", async(req, res)=>{
     }
 
     
+})
+
+app.use("/get-ride", async(req,res)=>{
+    const {ride_id}= req.body
+
+
+    console.log(req.body)
+    try{
+        const ride = await Ride.findOne({_id:ride_id})
+
+        console.log(ride)
+        res.status(200).send(ride)
+    }
+    catch(e)
+    {
+        console.log(e)
+        res.status(400).send("No ride found")
+    }
 })
 
 app.use("/updateride", async(req,res)=>{
@@ -751,6 +780,6 @@ app.use("/send", require('./notifications/api') )
 //         googleConfig.redirect
 //     );
 // }
-app.use(express.json());
+
 
 module.exports = app;
