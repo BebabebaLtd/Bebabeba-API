@@ -573,6 +573,8 @@ app.use("/sendmessage", async(req, res)=>{
 
 app.use("/createride", async(req, res)=>{
     const {driver_id} = req.body
+
+    console.log(req.body)
     try{
 
         const ride = Ride.create({
@@ -584,8 +586,8 @@ app.use("/createride", async(req, res)=>{
                 res.status(400).json(err)
             }
             else{
-                
-                Ride.findOneAndUpdate({id:result._id}, {$push: {carpoolers: driver_id}},
+                console.log(result._id );
+                Ride.findOneAndUpdate({_id:result._id}, {$push: {carpoolers: driver_id}},
                     function(err, result)
                     {
                         if(err){
@@ -617,10 +619,61 @@ app.use("/get-ride", async(req,res)=>{
 
     console.log(req.body)
     try{
-        const ride = await Ride.findOne({_id:ride_id})
+        let ride = await Ride.findOne({_id:ride_id})
 
         console.log(ride)
-        res.status(200).send(ride)
+        ride = { ride }
+
+        
+        
+        console.log(ride)
+
+        let dets = []
+
+        
+        let carpoolers_data = []
+
+
+        let count = 0
+            ride.ride.carpoolers.forEach(async (user_id)=>{
+            let user
+            let traveler
+            let vehicle
+            try{
+                user = await User.findOne({_id:user_id})
+                traveler = await Traveler.findOne({user_id:user_id})
+                vehicle = await Vehicle.findOne({user_id:user_id})
+                const return_data = {
+                    user:user,
+                    traveler:traveler,
+                    vehicle:vehicle
+                }
+
+                count = count+1
+                carpoolers_data.push(return_data)
+
+                if(ride.ride.carpoolers.length == count)
+                {
+                    ride["carpoolers_details"] = carpoolers_data
+                    res.status(200).send(ride)
+
+                }
+                
+                console.log(carpoolers_data)
+            }
+            catch(e){
+                console.log(e)
+            }
+            
+            
+        })
+        
+        
+
+
+        console.log(ride.carpoolers_details)
+        // res.status(200).send(ride)
+       
     }
     catch(e)
     {
@@ -665,9 +718,13 @@ app.use("/register-vehicle", async(req, res)=>{
 })
 
 app.use("/addcarpooler", async(req, res)=>{
+    const { _id, carpooler } = req.body
+
+    console.log(req.body)
+
     try{
-        const { _id, carpooler } = req.body
-        const update = await Ride.findOneAndUpdate({id:_id}, {$push: {carpoolers: carpooler}})
+        const update = await Ride.findByIdAndUpdate(_id, {$push: {carpoolers: carpooler}})
+        console.log("This is the updated one", update)
         res.status(200).json(update)
 
     }
@@ -682,19 +739,30 @@ app.use("/addcarpooler", async(req, res)=>{
 
 app.use("/getdirections", async(req, res)=>{
 
+    const { user_id, source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
+
+
+    console.log("This is the request body for the get directions endpoint",req.body)
+
+
+    console.log(user_id,source_latitude,source_longitude,destination_latitude,destination_longitude)
+
     try{
-        const { user_id,source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
         const directions = await googleMapDirections(source_latitude, source_longitude, destination_latitude, destination_longitude)
+        console.log(directions)
         const update = await Traveler.findOneAndUpdate({user_id:user_id}, {directions: directions.routes[0].overview_polyline.points})
         const duration = await Traveler.findOneAndUpdate({user_id:user_id}, {duration: directions.routes[0].legs[0].duration.value})
         const distance = await Traveler.findOneAndUpdate({user_id:user_id}, {distance: directions.routes[0].legs[0].distance.value})
 
     
-        
-        res.status(200).json(directions)
+        console.log("Tjis is the updated user>>>>>>>>>",update)
+        console.log("These are the directions", directions.routes[0])
+        res.status(200).json(directions.routes[0].overview_polyline.points)
     }
     catch(err){
         console.log(err)
+        res.status(400).json(err)
+
     }
 
 
@@ -715,6 +783,8 @@ app.use("/setorigin", async(req,res)=>{
 
 app.use("/getdrivers", async(req, res)=>{
 
+
+    console.log(req.body)
     const { source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
 
     let user = {
@@ -741,7 +811,6 @@ app.use("/getdrivers", async(req, res)=>{
 
 
                     try{
-
                         let viability = checkCarpoolViability(coords, user)
                         if(viability == true)
                         {
@@ -750,6 +819,7 @@ app.use("/getdrivers", async(req, res)=>{
     
                     }
                     catch(e){
+                        console.log(e)
                         throw(e)
 
                     }

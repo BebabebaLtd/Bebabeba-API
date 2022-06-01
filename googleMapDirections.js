@@ -3,7 +3,7 @@ const axios = require('axios')
 const googleMapDirections = async(srcLat, srcLng, destLat, destLng)=> {
     var config = {
       method: 'get',
-      url: 'https://maps.googleapis.com/maps/api/directions/json?origin='+srcLat+','+srcLng+'&destination='+destLat+','+destLng+ '&mode=driving&key=AIzaSyB0VZQy9-x8UEsjC6sTrQbRe5UohJn8fH0',
+      url: 'https://maps.googleapis.com/maps/api/directions/json?origin='+srcLat+','+srcLng+'&destination='+destLat+','+destLng+ '&mode=driving&key=AIzaSyAu19oy2n9MFMcXx_zug-IMJX5oUXqhnyg',
       headers: { }
     };
     console.log(config.url)
