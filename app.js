@@ -420,18 +420,56 @@ app.use("/cost", async(req, res)=>{
 })
 
 app.use("/mode", async(req, res)=>{
-    try{
-        const { user_id, mode } = req.body
+    const { user_id, mode } = req.body
 
-
+    console.log(req.body)
+    if(mode=="Passenger")
+    {
+        try{
         const update = await Traveler.findOneAndUpdate({user_id:user_id}, {mode:mode})
+
+                            const token = jwt.sign(update.toJSON(), process.env.TOKEN_KEY , {expiresIn:604800});
+                            res.status(200).send(token)
+             
+            res.status(200).json(token)
+    
+        }
+        catch(err){
+            console.log(err)
+        }
+    }
+    else{
+        try{
+            const vehicle = await Vehicle.findOne({user_id:user_id})
+
+            if(vehicle)
+            {
+
+                try{
+                    const update = await Traveler.findOneAndUpdate({user_id:user_id}, {mode:mode})
+                    const token = jwt.sign(update.toJSON(), process.env.TOKEN_KEY , {expiresIn:604800});
+                    res.status(200).send(token)
+             
+                }
+                catch(e){
+                    res.status(400).send("Failed")
+                }
+
+            }
+            else{
+                res.status(400).send("Failed")
+            }
          
-        res.status(200).json(update)
+             
+            
+    
+        }
+        catch(err){
+            console.log(err)
+        }
 
     }
-    catch(err){
-        console.log(err)
-    }
+    
 
     
 })
@@ -829,6 +867,38 @@ app.use("/getdrivers", async(req, res)=>{
         }
     }) 
     });
+
+
+app.use("/getpassengers", async(req,res)=>{
+    const {user_id} = req.body
+
+    try{
+
+        await Traveler.findOne({user_id:user_id},
+            function(err,res){
+                if(res){
+                    try{
+                        await Traveler.findOne({mode:"Passenger"},
+                        function(err,result){
+                            if(result{
+                                r
+                            })
+                        })
+
+                    }
+                    catch(e){
+
+                    }
+                }
+            }
+            )
+    }
+    catch(e){
+
+    }
+
+
+})
 
 
 
