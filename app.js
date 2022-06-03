@@ -511,9 +511,10 @@ app.use("/setdirections", async(req, res)=>{
 
 app.use("/origin", async(req, res)=>{
     try{
-        const { user_id, latitude, longitude } = req.body
+        const { user_id, latitude, longitude, origin_name } = req.body
         const lat = await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{origin:latitude}})
         const lng =await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{origin:longitude}})
+        await Traveler.findOneAndUpdate({user_id:user_id}, {origin_name:origin_name})
 
 
         res.status(200).json(lng)
@@ -527,10 +528,10 @@ app.use("/origin", async(req, res)=>{
 
 app.use("/destination", async(req, res)=>{
     try{
-        const { user_id, latitude, longitude } = req.body
+        const { user_id, latitude, longitude, destination_name } = req.body
         const lat = await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{destination:latitude}})
         const lng =await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{destination:longitude}})
-
+        await Traveler.findOneAndUpdate({user_id:user_id}, {destination_name:destination_name})
 
         res.status(200).json(lng)
 
@@ -615,6 +616,7 @@ app.use("/createride", async(req, res)=>{
     console.log(req.body)
     try{
 
+        await Ride.findAndModify({driver_id:driver_id}, {status:"Done"})
         const ride = Ride.create({
             driver_id:driver_id,
             status:"booked"
@@ -858,6 +860,64 @@ app.use("/getdrivers", async(req, res)=>{
                 })
 
             res.status(200).json(viableDrivers)
+        }
+    }) 
+    });
+
+app.use("/getviablerides", async(req,res)=>{
+    const { source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
+
+    let user = {
+                    origin:[source_latitude,source_longitude],
+                    destination:[destination_latitude,destination_longitude]
+                }
+        const drivers = Traveler.find({mode: "Driver"}, function(err, result){
+        if(err)
+        {
+            console.log(err)
+        }
+        else{
+            let viableRides = []
+
+            result.forEach((driver)=>{
+
+                let coords = decode(driver.directions)
+
+
+                try{
+                    let viability = checkCarpoolViability(coords, user)
+
+
+                    if(viability == true)
+                    {
+                        const ride = Ride.find({status:"booked"},
+                        function(err, result){
+                            if(result){
+                                let count = 0
+                                result.forEach((ride)=>{
+
+                                    viableRides.push({ride,driver})
+                                    count+=1
+
+                                    if(count == result.length){
+                                        res.status(200).json(viableRides)
+                                    }
+                                })
+                                
+                                
+                                console.log({result,driver})
+                            }
+                        })
+                    }
+
+                }
+                catch(e){
+                    console.log(e)
+                    throw(e)
+
+                }
+            })
+
         }
     }) 
     });

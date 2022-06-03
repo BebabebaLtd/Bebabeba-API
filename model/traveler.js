@@ -12,6 +12,8 @@ const travelerSchema = new mongoose.Schema({
     cost:{type:Number, default:0},
     currentRideId:{type:String, default:''},
     origin:{type:Array},
+    origin_name:{type:String},
+    destination_name:{type:String},
     destination:{type:Array},
     mode:{type:String, default:'Passenger'},
     departure:{type:Date, default:null},
