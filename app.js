@@ -826,14 +826,8 @@ app.use("/getdrivers", async(req, res)=>{
     const { source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
 
     let user = {
-                    origin:{
-                        latitude:source_latitude,
-                        longitude:source_longitude,
-                    },
-                    destination:{
-                        latitude:destination_latitude,
-                        longitude:destination_longitude
-                    }
+                    origin:[source_latitude,source_longitude],
+                    destination:[destination_latitude,destination_longitude]
                 }
     const drivers = Traveler.find({mode: "Driver"}, function(err, result){
         if(err)
@@ -868,37 +862,6 @@ app.use("/getdrivers", async(req, res)=>{
     }) 
     });
 
-
-app.use("/getpassengers", async(req,res)=>{
-    const {user_id} = req.body
-
-    try{
-
-        await Traveler.findOne({user_id:user_id},
-            function(err,res){
-                if(res){
-                    try{
-                        await Traveler.findOne({mode:"Passenger"},
-                        function(err,result){
-                            if(result{
-                                r
-                            })
-                        })
-
-                    }
-                    catch(e){
-
-                    }
-                }
-            }
-            )
-    }
-    catch(e){
-
-    }
-
-
-})
 
 
 

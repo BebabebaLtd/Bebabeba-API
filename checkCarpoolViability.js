@@ -2,21 +2,20 @@ const geolib = require('geolib')
 
 const checkCarpoolViability=(points, user)=>{
     let viableCarpooler = false
-    if(user.origin.latitude && user.origin.longitude && user.destination.latitude && user.destination.longitude)
+    if(user.origin[0] && user.origin[1] && user.destination[0] && user.destination[1] )
     {
         points.forEach(element => {
             viableSource = false
             viableDestination = false
         
     
-        
             viableSource = geolib.isPointWithinRadius(
-                {latitude : user.origin.latitude, longitude:  user.origin.longitude},
+                {latitude : user.origin[0], longitude:  user.origin[1]},
                 {latitude : element[0], longitude:  element[1]},
                 5000
             )
             viableDestination = geolib.isPointWithinRadius(
-                {latitude : user.destination.latitude, longitude:  user.destination.longitude},
+                {latitude : user.destination[0], longitude:  user.destination[1]},
                 {latitude : element[0], longitude:  element[1]},
                 5000
             )
