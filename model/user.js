@@ -7,6 +7,10 @@ const userSchema = new mongoose.Schema({
     password:{ type: String},
     phone:{type:String,unique:true,required:true},
     profile_picture:{type:String, default:null},
+    identification_number:{type:String, default:null},
+    date_of_birth:{type:String, default:null},
+    gender:{type:String, default:null},
+    id_verified:{type:String, default:false},
     token: { type: String}, 
 });
 

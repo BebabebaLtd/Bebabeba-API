@@ -366,6 +366,25 @@ app.use("/getuserdetails", async(req,res)=>{
 })
 
 
+app.use("/updateuser", async(req,res)=>{
+    const {user_id, gender, date_of_birth} = req.body
+
+    try{
+        await User.findByIdAndUpdate(user_id,{gender:gender, date_of_birth:date_of_birth, id_verified:true}
+        ,
+        function(err,result){
+            if(result){
+                const token = jwt.sign(result.toJSON(), process.env.TOKEN_KEY , {expiresIn:604800});
+                res.status(200).send(token)
+            }
+        })
+    }
+    catch(e){
+        res.status(400).send("Failed")
+    }
+})
+
+
 
 
 app.use("/distance", async(req, res)=>{
@@ -867,7 +886,7 @@ app.use("/getdrivers", async(req, res)=>{
 app.use("/getviablerides", async(req,res)=>{
     const { source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
 
-    let user = {
+        let user = {
                     origin:[source_latitude,source_longitude],
                     destination:[destination_latitude,destination_longitude]
                 }
