@@ -4,7 +4,6 @@ const travelerSchema = new mongoose.Schema({
     user_id:{type:String, default:null},
     first_name:{ type: String, default: null},
     last_name:{ type: String, default:null },
-    email:{ type: String, unique:true},
     devToken:{type:String, default:''},
     phone:{type:String,unique:true,default:''},
     distance:{type:String, default:0},

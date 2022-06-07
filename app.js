@@ -86,6 +86,7 @@ const Otp = require("./model/otp")
 const decode = require("./decode");
 const checkCarpoolViability = require("./checkCarpoolViability");
 const { findOneAndUpdate } = require("./model/traveler");
+const sendSms = require("./sendSms");
 // //Register
 // app.use("/register", async (req, res) =>{
 //     ///registration logic comes here
@@ -243,6 +244,7 @@ app.use("/create-otp", async(req,res)=>{
 
     const code = Math.floor(1000 + Math.random() * 9000)
     try{
+        sendSms(phone, `Rydr code: ${code}`)
 
         const usr = await User.findOne({phone:phone})
         console.log(usr)
@@ -294,7 +296,7 @@ app.use("/createuser", async(req,res)=>{
             phone:phone,
             first_name:first_name,
             last_name:last_name,
-            id_number:id_number
+            identification_number:id_number
         }, function(err, result){
             if(result){
                 console.log(result)
@@ -313,8 +315,7 @@ app.use("/createuser", async(req,res)=>{
                         
                     }
                     else{
-                        res.status(201).send("No user found")
-
+                        res.status(201).send(err)
                     }
                 })
 
@@ -365,19 +366,31 @@ app.use("/getuserdetails", async(req,res)=>{
 
 app.use("/updateuser", async(req,res)=>{
     const {user_id, gender, date_of_birth} = req.body
+    console.log(req.body)
 
     try{
-        await User.findByIdAndUpdate(user_id,{gender:gender, date_of_birth:date_of_birth, id_verified:true}
-        ,
-        function(err,result){
-            if(result){
-                const token = jwt.sign(result.toJSON(), process.env.TOKEN_KEY , {expiresIn:604800});
-                res.status(200).send(token)
+        await User.findByIdAndUpdate(user_id,{gender:gender, date_of_birth:date_of_birth, id_verified:true},
+        function async(err,result){
+            if(result)
+            {
+                Traveler.findOne({user_id:user_id},
+                    function(err, result)
+                    {
+                        if(result){
+                            const token = jwt.sign(result.toJSON(), process.env.TOKEN_KEY , {expiresIn:604800});
+                            res.status(200).send(token)
+                        }
+                        if(err){
+                            res.status(400).send("Failed")
+                        }
+                    })
             }
+            
+            
         })
     }
     catch(e){
-        res.status(400).send("Failed")
+      
     }
 })
 
