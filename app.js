@@ -3,7 +3,6 @@ require("./config/database").connect();
 // const google = require("googleapis")
 const { GOOGLE_CLIENT_ID } = process.env
 const { GOOGLE_CLIENT_SECRET } = process.env
-const bcrypt = require("bcryptjs");
 const express = require("express");
 const auth = require("./middleware/auth");
 const jwt = require('jsonwebtoken')
@@ -87,120 +86,118 @@ const Otp = require("./model/otp")
 const decode = require("./decode");
 const checkCarpoolViability = require("./checkCarpoolViability");
 const { findOneAndUpdate } = require("./model/traveler");
-//Register
-app.use("/register", async (req, res) =>{
-    ///registration logic comes here
-    console.log("first")
-    try{
-        const{first_name, last_name, email,phone,password} = req.body;
+// //Register
+// app.use("/register", async (req, res) =>{
+//     ///registration logic comes here
+//     console.log("first")
+//     try{
+//         const{first_name, last_name, email,phone,password} = req.body;
 
 
-        console.log(req.body)
-        //validate user input
-        if(!(email&&password&&first_name&&last_name&&phone)){
-            return res.status(400).send("All input is required");
-        }
+//         console.log(req.body)
+//         //validate user input
+//         if(!(email&&password&&first_name&&last_name&&phone)){
+//             return res.status(400).send("All input is required");
+//         }
 
-        // Check if user is preset
-        const usedEmail = await User.findOne({email});
+//         // Check if user is preset
+//         const usedEmail = await User.findOne({email});
 
-        const usedPhone = await User.findOne({phone});
+//         const usedPhone = await User.findOne({phone});
 
-        if(usedEmail||usedPhone){
-            return res.status(409).send("User Already Exists. Please Login")
-        }
+//         if(usedEmail||usedPhone){
+//             return res.status(409).send("User Already Exists. Please Login")
+//         }
 
-        let encryptedPassword
-        if(password)
-        {
-            encryptedPassword = await bcrypt.hash(password, 10);
-            console.log(encryptedPassword);
-        }
+//         let encryptedPassword
+//         if(password)
+//         {
+//             encryptedPassword = await bcrypt.hash(password, 10);
+//             console.log(encryptedPassword);
+//         }
         
 
 
 
-        const user =  User.create({
-            first_name,
-            last_name,
-            email:email.toLowerCase(),
-            phone,
-            password:encryptedPassword
-        },
-        function(err, result){
-            console.log(result)
-            const traveler = Traveler.create({
-                user_id:result._id,
-                first_name,
-                last_name,
-                email:email.toLowerCase(),
-                phone,  
-            })
+//         const user =  User.create({
+//             first_name,
+//             last_name,
+//             email:email.toLowerCase(),
+//             phone,
+//             password:encryptedPassword
+//         },
+//         function(err, result){
+//             console.log(result)
+//             const traveler = Traveler.create({
+//                 user_id:result._id,
+//                 first_name,
+//                 last_name,
+//                 email:email.toLowerCase(),
+//                 phone,  
+//             })
 
 
 
-            // const token = jwt.sign(
-            //     {user_id : result._id, email,first_name,last_name,phone},
-            //     process.env.TOKEN_KEY,
-            //     {
-            //         expiresIn:"2h",
-            //     }
-            // );
+//             // const token = jwt.sign(
+//             //     {user_id : result._id, email,first_name,last_name,phone},
+//             //     process.env.TOKEN_KEY,
+//             //     {
+//             //         expiresIn:"2h",
+//             //     }
+//             // );
 
-            // user.token = token;
+//             // user.token = token;
 
-            //return new user
-            res.status(201).json(result);
-        }
-        );
+//             //return new user
+//             res.status(201).json(result);
+//         }
+//         );
 
         
 
      
-    }catch(err){
-        console.log(err)
-    }
-});
+//     }catch(err){
+//         console.log(err)
+//     }
+// });
 
-app.use("/create-user", async(req, res)=>{
 
-})
 
 
 
 //Login
-app.use("/login", async(req, res)=>{
-    ///login logic
-    try{
-        const { emailorphone, password } = req.body;
-        if(!(emailorphone&&password)){
-            res.status(400).send("All input is required");
-        }
-        console.log(req.body)
-        const userEmail = await User.findOne({emailorphone});
-        const userPhone = await User.findOne({emailorphone})
+// app.use("/login", async(req, res)=>{
+//     ///login logic
+//     try{
+//         const { emailorphone, password } = req.body;
+//         if(!(emailorphone&&password)){
+//             res.status(400).send("All input is required");
+//         }
+//         console.log(req.body)
+//         const userEmail = await User.findOne({emailorphone});
+//         const userPhone = await User.findOne({emailorphone})
 
-        if((userEmail && (await bcrypt.compare(password, userEmail.password)))|| userPhone && (await bcrypt.compare(password, userPhone.password))){
-            const token = jwt.sign(
-                {user_id : userEmail._id, first_name: userEmail.first_name, last_name: userEmail.last_name, email: userEmail.email, phone: userEmail.phone  },
-                process.env.TOKEN_KEY,
-                {
-                    expiresIn:"2h",
-                }
-            );
-            userEmail.token = token;
+//         if((userEmail && (await bcrypt.compare(password, userEmail.password)))|| userPhone && (await bcrypt.compare(password, userPhone.password))){
+//             const token = jwt.sign(
+//                 {user_id : userEmail._id, first_name: userEmail.first_name, last_name: userEmail.last_name, email: userEmail.email, phone: userEmail.phone  },
+//                 process.env.TOKEN_KEY,
+//                 {
+//                     expiresIn:"2h",
+//                 }
+//             );
+//             userEmail.token = token;
 
-            res.status(200).json(userEmail.token)
+//             res.status(200).json(userEmail.token)
 
-        }
-        res.status(400).send("Invalid Credentials")
+//         }
+//         res.status(400).send("Invalid Credentials")
 
-    }
-    catch(err){
-        console.log(err)
+//     }
+//     catch(err){
+//         console.log(err)
 
-    }
-})
+//     }
+// })
 
 
 app.use("/phone-login", async(req,res)=>{
