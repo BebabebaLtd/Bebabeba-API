@@ -308,6 +308,7 @@ app.use("/createuser", async(req,res)=>{
                     phone: result.phone,  
                 },
                 function(err,result){
+                    console.log(result)
                     if(result){
                         console.log( process.env.TOKEN_KEY)
                         const token = jwt.sign(result.toJSON(), process.env.TOKEN_KEY);
