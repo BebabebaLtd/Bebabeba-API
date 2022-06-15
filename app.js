@@ -770,7 +770,7 @@ app.use("/updateride", async(req,res)=>{
 
 app.use("/register-vehicle", async(req, res)=>{
     try{
-        const { user_id, front_image, back_image, left_image, right_image, plate_image, dashboard_image, seats_image} = req.body
+        const { user_id, front_image, back_image, left_image, right_image, plate_image, dashboard_image, seats_image, plate_number} = req.body
         const vehicle = Vehicle.create(req.body,
             function(err, result){
                 res.status(200).json(result)
@@ -781,11 +781,33 @@ app.use("/register-vehicle", async(req, res)=>{
 
     }
     catch(err){
+        res.status(400).json(result)
         console.log(err)
     }
 
     
 })
+
+app.use("/setprofileimage", async(req,res)=>{
+    const { user_id, profile_uri } = req.body
+
+    try{
+        const traveler = await Traveler.findById(user_id)
+        User.findByIdAndUpdate(traveler.user_id, {profile_picture:profile_uri},
+            function(err, result){
+                if(result)
+                {
+                    res.status(200).send(result)
+                }
+            })
+    }
+    catch(e)
+    {
+        res.status(400).json(e)
+    }
+})
+
+
 
 app.use("/addcarpooler", async(req, res)=>{
     const { _id, carpooler } = req.body
