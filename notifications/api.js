@@ -16,8 +16,6 @@ const decode = require("../decode");
 const checkCarpoolViability = require("../checkCarpoolViability");
 const fcm = new FCM(serverKey);
 router.post("/sendnotification",async(req, res)=>{
-    console.log(req.body)
-    // const {title , msg, user_id,token , price, time, duration, seats, name,distance,notification_type }  = req.body
     const {title , msg, user_id,token , data }  = req.body
     let return_token = ''
     try{

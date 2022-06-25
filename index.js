@@ -20,3 +20,5 @@ const pusher = new Pusher({
     encrypted  : true,
   });
 const channel = 'coordinates';
+
+module.exports =[ pusher]

@@ -27,55 +27,6 @@ app.use("/welcome", (req,res)=>{
     res.status(200).send("Welcome");
 });
 
-// app.use("/get-twilio-token", async (req,res)=>{
-//     const accountSid = process.env.TWILIO_ACCOUNT_SID;
-//     const authToken = process.env.TWILIO_AUTH_TOKEN;
-//     const client = require('twilio')(accountSid, authToken);
-
-//     console.log(accountSid)
-//     console.log(authToken)
-//     client.calls
-
-//         .create({
-//             url: 'http://demo.twilio.com/docs/voice.xml',
-//             to: '+254726539744',
-//             from: '+15005550006'
-//         })
-//       .then(call =>
-//         {
-//             res.status(200).send(call)
-
-//         })
-//     .catch((err)=>{
-//         res.status(400).send(err)
-
-//     })
-//     // const ChatGrant = AccessToken.ChatGrant;
-//     // const { TWILIO_ACCOUNT_SID } = process.env
-//     // const { TWILIO_AUTH_TOKEN } = process.env
-//     // const { TWILIO_SECRET } = process.env
-//     // const { TWILIO_APP_SID } = process.env
-
-//     // const voiceGrant = new VoiceGrant({
-//     //     outgoingApplicationSid : TWILIO_APP_SID,
-//     //     incoming: "allow"
-//     // })
-//     // const token = new AccessToken(
-//     //     TWILIO_ACCOUNT_SID,
-//     //     TWILIO_AUTH_TOKEN,
-//     //     TWILIO_SECRET,
-        
-//     //     {identity:"RydrKey"}
-//     // )
-
-//     // token.addGrant(voiceGrant)
-
-
-// })
-
-
-
-//import user context
 const User = require("./model/user");
 const Traveler = require("./model/traveler");
 const Message = require("./model/message")
@@ -87,118 +38,6 @@ const decode = require("./decode");
 const checkCarpoolViability = require("./checkCarpoolViability");
 const { findOneAndUpdate } = require("./model/traveler");
 const sendSms = require("./sendSms");
-// //Register
-// app.use("/register", async (req, res) =>{
-//     ///registration logic comes here
-//     console.log("first")
-//     try{
-//         const{first_name, last_name, email,phone,password} = req.body;
-
-
-//         console.log(req.body)
-//         //validate user input
-//         if(!(email&&password&&first_name&&last_name&&phone)){
-//             return res.status(400).send("All input is required");
-//         }
-
-//         // Check if user is preset
-//         const usedEmail = await User.findOne({email});
-
-//         const usedPhone = await User.findOne({phone});
-
-//         if(usedEmail||usedPhone){
-//             return res.status(409).send("User Already Exists. Please Login")
-//         }
-
-//         let encryptedPassword
-//         if(password)
-//         {
-//             encryptedPassword = await bcrypt.hash(password, 10);
-//             console.log(encryptedPassword);
-//         }
-        
-
-
-
-//         const user =  User.create({
-//             first_name,
-//             last_name,
-//             email:email.toLowerCase(),
-//             phone,
-//             password:encryptedPassword
-//         },
-//         function(err, result){
-//             console.log(result)
-//             const traveler = Traveler.create({
-//                 user_id:result._id,
-//                 first_name,
-//                 last_name,
-//                 email:email.toLowerCase(),
-//                 phone,  
-//             })
-
-
-
-//             // const token = jwt.sign(
-//             //     {user_id : result._id, email,first_name,last_name,phone},
-//             //     process.env.TOKEN_KEY,
-//             //     {
-//             //         expiresIn:"2h",
-//             //     }
-//             // );
-
-//             // user.token = token;
-
-//             //return new user
-//             res.status(201).json(result);
-//         }
-//         );
-
-        
-
-     
-//     }catch(err){
-//         console.log(err)
-//     }
-// });
-
-
-
-
-
-//Login
-// app.use("/login", async(req, res)=>{
-//     ///login logic
-//     try{
-//         const { emailorphone, password } = req.body;
-//         if(!(emailorphone&&password)){
-//             res.status(400).send("All input is required");
-//         }
-//         console.log(req.body)
-//         const userEmail = await User.findOne({emailorphone});
-//         const userPhone = await User.findOne({emailorphone})
-
-//         if((userEmail && (await bcrypt.compare(password, userEmail.password)))|| userPhone && (await bcrypt.compare(password, userPhone.password))){
-//             const token = jwt.sign(
-//                 {user_id : userEmail._id, first_name: userEmail.first_name, last_name: userEmail.last_name, email: userEmail.email, phone: userEmail.phone  },
-//                 process.env.TOKEN_KEY,
-//                 {
-//                     expiresIn:"2h",
-//                 }
-//             );
-//             userEmail.token = token;
-
-//             res.status(200).json(userEmail.token)
-
-//         }
-//         res.status(400).send("Invalid Credentials")
-
-//     }
-//     catch(err){
-//         console.log(err)
-
-//     }
-// })
 
 
 app.use("/phone-login", async(req,res)=>{
@@ -482,12 +321,12 @@ app.use("/mode", async(req, res)=>{
              
                 }
                 catch(e){
-                    res.status(400).send("Failed")
+                    res.status(400).send(e)
                 }
 
             }
             else{
-                res.status(400).send("Failed")
+                res.status(400).send("No vehicle found")
             }
          
              
@@ -542,6 +381,7 @@ app.use("/setdirections", async(req, res)=>{
 app.use("/origin", async(req, res)=>{
     try{
         const { user_id, latitude, longitude, origin_name } = req.body
+        await Traveler.findOneAndUpdate({user_id: user_id}, {origin:[]})
         const lat = await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{origin:latitude}})
         const lng =await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{origin:longitude}})
         await Traveler.findOneAndUpdate({user_id:user_id}, {origin_name:origin_name})
@@ -559,6 +399,8 @@ app.use("/origin", async(req, res)=>{
 app.use("/destination", async(req, res)=>{
     try{
         const { user_id, latitude, longitude, destination_name } = req.body
+        await Traveler.findOneAndUpdate({user_id: user_id}, {destination:[]})
+
         const lat = await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{destination:latitude}})
         const lng =await Traveler.findOneAndUpdate({user_id:user_id}, {$push:{destination:longitude}})
         await Traveler.findOneAndUpdate({user_id:user_id}, {destination_name:destination_name})
@@ -646,7 +488,7 @@ app.use("/createride", async(req, res)=>{
     console.log(req.body)
     try{
 
-        await Ride.findAndModify({driver_id:driver_id}, {status:"Done"})
+        await Ride.updateMany({driver_id:driver_id}, {status:"Done"})
         const ride = Ride.create({
             driver_id:driver_id,
             status:"booked"
@@ -677,6 +519,7 @@ app.use("/createride", async(req, res)=>{
 
     }
     catch(err){
+        console.log(err)
         res.status(400).json(err)
     }
 
@@ -797,7 +640,7 @@ app.use("/setprofileimage", async(req,res)=>{
             function(err, result){
                 if(result)
                 {
-                    res.status(200).send(result)
+                    res.status(200).json(profile_uri)
                 }
             })
     }
@@ -807,8 +650,28 @@ app.use("/setprofileimage", async(req,res)=>{
     }
 })
 
+app.use("/getprofileimage", async(req,res)=>{
+    const { user_id } = req.body
 
+    try{
+        const user = await User.findById(user_id)
+        res.status(200).json(user.profile_picture)
+    }
+    catch(e)
+    {
+        res.status(400).json(e)
+    }
+})
 
+const Pusher = require('pusher');
+
+const pusher = new Pusher({
+    appId      : '1421745',
+    key        : '5d04aa1d0893f7e00bb2',
+    secret     : '7e159705067585400435',
+    cluster    : 'eu',
+    encrypted  : true,
+  });
 app.use("/addcarpooler", async(req, res)=>{
     const { _id, carpooler } = req.body
 
@@ -816,7 +679,12 @@ app.use("/addcarpooler", async(req, res)=>{
 
     try{
         const update = await Ride.findByIdAndUpdate(_id, {$push: {carpoolers: carpooler}})
-        console.log("This is the updated one", update)
+        console.log("This is the updated one", _id+"carpoolers")
+        pusher.trigger(
+            _id,
+            'ride_update', 
+            update
+        );
         res.status(200).json(update)
 
     }
@@ -919,6 +787,7 @@ app.use("/getdrivers", async(req, res)=>{
 app.use("/getviablerides", async(req,res)=>{
     const { source_latitude, source_longitude, destination_latitude, destination_longitude } = req.body
 
+    console.log(req.body)
         let user = {
                     origin:[source_latitude,source_longitude],
                     destination:[destination_latitude,destination_longitude]
@@ -929,6 +798,7 @@ app.use("/getviablerides", async(req,res)=>{
             console.log(err)
         }
         else{
+            console.log(result)
             let viableRides = []
 
             result.forEach((driver)=>{
@@ -944,6 +814,7 @@ app.use("/getviablerides", async(req,res)=>{
                     {
                         const ride = Ride.find({status:"booked"},
                         function(err, result){
+                            console.log(result)
                             if(result){
                                 let count = 0
                                 result.forEach((ride)=>{
@@ -966,6 +837,8 @@ app.use("/getviablerides", async(req,res)=>{
                 catch(e){
                     console.log(e)
                     throw(e)
+                    res.status(400).json(e)
+
 
                 }
             })
