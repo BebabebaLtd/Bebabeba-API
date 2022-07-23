@@ -75,6 +75,19 @@ app.use("/phone-login", async(req,res)=>{
     }
 })
 
+app.use("/send-message", async(req, res)=>{
+    const {phone, message} = req.body
+
+    try{
+        sendSms(phone, message)
+        res.status(200).send("Success")
+    }
+    catch(e)
+    {
+        res.status(400).send("Failed")
+    }
+})
+
 app.use("/create-otp", async(req,res)=>{
     const { phone } = req.body
 
@@ -853,6 +866,9 @@ app.use("/getviablerides", async(req,res)=>{
 
 
 app.use("/send", require('./notifications/api') )
+
+
+app.use("/pay", require('./payment/index'))
 
 ///For google login
 // const googleConfig={

@@ -35,13 +35,6 @@ db.once("open", ()=>{
     const coords = db.collection('travelers')
     const ridedets = db.collection("rides")
     const changeStream  = coords.watch()
-
-    // const changeRide = ridedets.watch()
-    // changeRide.on('change', async(change)=>{
-    //     console.log("These are the changed document id",change.documentKey._id)
-    //     pusher.trigger(String(change.documentKey._id), 'updated',change)
-    // })
-
     changeStream.on('change', async(change)=>{
         const task = change.documentKey;
         console.log("This is the driver id",task._id)
