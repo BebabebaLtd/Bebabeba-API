@@ -21,11 +21,9 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const path = require("path")
 
-
-app.use("/welcome", (req,res)=>{
-    res.status(200).send("Welcome");
-});
+app.use(express.static("react-website-pawatrip/build"));
 
 const User = require("./model/user");
 const Traveler = require("./model/traveler");
