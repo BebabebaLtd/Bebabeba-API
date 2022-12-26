@@ -1,0 +1,134 @@
+.home__hero-section {
+    color: #fff;
+    padding: 2rem 0;
+}
+
+.home__hero-row {
+    align-items: center;
+}
+
+.home__hero-img-wrapper {
+    text-align: center;
+    margin-right: 5rem;
+
+}
+
+.row {
+    display: flex;
+    margin-right: -15px;
+    margin-bottom: -15px;
+    margin-left: -15px;
+    flex-wrap: wrap;
+    align-content: stretch;
+}
+
+.col {
+    margin-bottom: 15px;
+    padding-right: 15px;
+    padding-left: 15px;
+    flex: 1;
+    max-width: 50%;
+    flex-basis: 50%;
+}
+
+.home__hero-text-wrapper {
+    max-width: 540px;
+    padding-top: 0;
+    padding-bottom: 60px;
+}
+
+.top-line {
+    color: white;
+    font-size: 16px;
+    line-height: 16px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+}
+
+.heading {
+    margin-bottom: 24px;
+    font-size: 48px;
+    line-height: 1.1;
+    font-weight: 600;
+    color: #23bbcb;
+}
+
+.dark {
+    color: #23bbcb;
+}
+
+.darkBg {
+    background-color: #061a63;
+}
+
+.home__hero-subtitle {
+    max-width: 440px;
+    margin-bottom: 35px;
+    font-size: 18px;
+    line-height: 24px;
+}
+
+
+.container>bgimg {
+    background-repeat: no-repeat;
+}
+
+@media screen and (max-width: 991px) {
+    .container {
+        padding-right: 30px;
+        padding-left: 30px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .home__hero-text-wrapper {
+        padding-bottom: 65px;
+    }
+
+    .col {
+        max-width: 100%;
+        flex-basis: 100%;
+    }
+}
+
+.bigPhone {
+    width: 100%;
+    height: auto;
+    /*z-index: 15;*/
+    /* position: relative; */
+    margin: 0 auto;
+    margin-top: -85rem;
+
+
+
+}
+
+@media (max-width: 770px) {
+    .bigPhone {
+        /*z-index: 0;*/
+        margin-top: 0;
+    }
+}
+
+@media (min-width: 812px) {
+    .bigPhone {
+        /*z-index: 0;*/
+        max-height: 16rem;
+        width: auto;
+        justify-self: center;
+
+    }
+}
+
+
+@media (min-width: 952px) {
+    .bigPhone {
+        /*z-index: 0;*/
+        margin-top: -35rem;
+        margin-right: -20rem;
+
+
+    }
+}

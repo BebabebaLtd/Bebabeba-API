@@ -1,0 +1,15 @@
+body {
+    color: rgb(93, 71, 159);
+}
+
+.icon__container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+
+.undrawcontainer {
+    margin: 50px 50px 70px 50px;
+}
