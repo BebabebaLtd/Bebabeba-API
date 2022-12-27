@@ -158,7 +158,7 @@ app.use("/createuser", async(req,res)=>{
                     phone: result.phone,  
                 },
                 function(err,result){
-                    console.log(result)
+                    console.log("This>>>>>>>>>>>>>>",result)
                     if(result){
                         console.log( process.env.TOKEN_KEY)
                         const token = jwt.sign(result.toJSON(), process.env.TOKEN_KEY);
@@ -725,10 +725,15 @@ app.use("/getdirections", async(req, res)=>{
         const duration = await Traveler.findOneAndUpdate({user_id:user_id}, {duration: directions.routes[0].legs[0].duration.value})
         const distance = await Traveler.findOneAndUpdate({user_id:user_id}, {distance: directions.routes[0].legs[0].distance.value})
 
-    
-        console.log("Tjis is the updated user>>>>>>>>>",update)
-        console.log("These are the directions", directions.routes[0])
-        res.status(200).json(directions.routes[0].overview_polyline.points)
+        let pts = decode(directions.routes[0].overview_polyline.points)
+        let points = []
+        pts.forEach((point)=>{
+            points.push({
+                latitude: point[0],
+                longitude: point[1]
+            })
+        })
+        res.status(200).json(points)
     }
     catch(err){
         console.log(err)
