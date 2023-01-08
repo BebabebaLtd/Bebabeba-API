@@ -606,6 +606,75 @@ app.use("/get-ride", async(req,res)=>{
     }
 })
 
+app.use("/get-ride-by-driver", async(req,res)=>{
+    const {driver_id}= req.body
+
+
+    console.log(req.body)
+    try{
+        let ride = await Ride.findOne({driver_id:driver_id})
+
+        console.log(ride)
+        ride = { ride }
+
+        
+        
+        console.log(ride)
+
+        let dets = []
+
+        
+        let carpoolers_data = []
+
+
+        let count = 0
+            ride.ride.carpoolers.forEach(async (user_id)=>{
+            let user
+            let traveler
+            let vehicle
+            try{
+                user = await User.findOne({_id:user_id})
+                traveler = await Traveler.findOne({user_id:user_id})
+                vehicle = await Vehicle.findOne({user_id:user_id})
+                const return_data = {
+                    user:user,
+                    traveler:traveler,
+                    vehicle:vehicle
+                }
+
+                count = count+1
+                carpoolers_data.push(return_data)
+
+                if(ride.ride.carpoolers.length == count)
+                {
+                    ride["carpoolers_details"] = carpoolers_data
+                    res.status(200).send(ride)
+
+                }
+                
+                console.log(carpoolers_data)
+            }
+            catch(e){
+                console.log(e)
+            }
+            
+            
+        })
+        
+        
+
+
+        console.log(ride.carpoolers_details)
+        // res.status(200).send(ride)
+       
+    }
+    catch(e)
+    {
+        console.log(e)
+        res.status(400).send("No ride found")
+    }
+})
+
 app.use("/updateride", async(req,res)=>{
     const { id,status ,member_id } = req.body
     try{
@@ -733,7 +802,11 @@ app.use("/getdirections", async(req, res)=>{
                 longitude: point[1]
             })
         })
-        res.status(200).json(points)
+        let obj = {}
+        obj.distance = (distance.distance / 1000).toFixed(2)
+        obj.duration = (duration.duration / 60).toFixed(0)
+        obj.points = points
+        res.status(200).json(obj)
     }
     catch(err){
         console.log(err)

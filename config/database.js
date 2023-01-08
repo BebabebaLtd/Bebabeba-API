@@ -5,13 +5,14 @@ const Ride = require("../model/ride");
 
 const { MONGO_URI } = process.env;
 
-const pusher = new Pusher({
+export const pusher = new Pusher({
     appId      : '1421745',
     key        : '5d04aa1d0893f7e00bb2',
     secret     : '7e159705067585400435',
     cluster    : 'eu',
     encrypted  : true,
 });
+
 
 exports.connect = ()=>{
     mongoose
@@ -50,10 +51,10 @@ db.once("open", ()=>{
     })
 })
 
-const trigger=(channel, user)=>{
+export const trigger=(channel, body)=>{
     pusher.trigger(
         channel,
         'updated', 
-        user
+        body
     );
 }

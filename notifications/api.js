@@ -14,6 +14,7 @@ const serverKey = require("../rydr-aff11-firebase-adminsdk-a30ws-a8274d05d9.json
 const message = require("../model/message");
 const decode = require("../decode");
 const checkCarpoolViability = require("../checkCarpoolViability");
+const { trigger } = require("../config/database");
 const fcm = new FCM(serverKey);
 router.post("/sendnotification",async(req, res)=>{
     const {title , msg, user_id,token , data }  = req.body
@@ -54,7 +55,7 @@ router.post("/sendnotification",async(req, res)=>{
 
     console.log(message)
 
-    
+    trigger(user_id, data)    
     fcm.send(message, function(err, response){
         if (err) {
             console.log("Something has gone wrong!");
@@ -114,6 +115,11 @@ router.post("/sendmessage", async(req,res)=>{
 
         }
     })
+})
+
+router.post("/sendpushernotification", async(req,res)=>{
+    const { user_id }  = req.body
+    trigger(req.body, user_id)
 })
 
 
