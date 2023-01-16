@@ -963,9 +963,9 @@ app.use("/pay-driver", async(req,res)=>{
 })
 
 app.post("/handler", async(req, res) => {
+    // payment.createPayment("12","aacde","bbfre")
     console.log("It is being handled at this point........")
     console.log(req.query)
-    console.log(req.body)
     const {user_id, type, amount, recepient_id} = req.query
     if(type == 'subscription' && req.body.Body.stkCallback.ResultCode == 0){
         try{

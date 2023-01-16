@@ -166,13 +166,16 @@ const createOrUpdateWallet=async(amount, user_id, subscribed)=>{
 
 const createPayment=async(amount, user_id, recepient_id)=>{
     const wallet = await Wallet.findOne({user_id:recepient_id})
-    await Payment.create({user_id:user_id, balance:amount, recepient_id:recepient_id})
+    await Payment.create({user_id:user_id, amount:amount, recepient_id:recepient_id})
     if(wallet){
         let amt =  wallet.balance + parseInt(amount)
-        await Wallet.findOneAndUpdate({user_id: recepient_id, balance: amt})
+        console.log(amt)
+        const res = await Wallet.findOneAndUpdate({user_id: recepient_id},{ balance: amt})
+        console.log("object",res)
     }
     else{
-        await Wallet.create({user_id: recepient_id, balance: amt})
+        const res = await Wallet.create({user_id: recepient_id, balance: parseInt(amount)})
+        console.log("object2",res)
     }
     return wallet
 }
