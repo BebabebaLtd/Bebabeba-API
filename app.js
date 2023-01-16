@@ -33,6 +33,7 @@ const User = require("./model/user");
 const Traveler = require("./model/traveler");
 const Message = require("./model/message")
 const user = require("./model/user");
+const Wallet = require('./model/wallet')
 const Ride = require("./model/ride");
 const Vehicle = require("./model/vehicle")
 const Otp = require("./model/otp")
@@ -948,30 +949,42 @@ app.use("/send", require('./notifications/api') )
 
 
 app.use("/subscribe", async(req,res)=>{
-    const { user_id, phone} = req.body
+    const { user_id, phone, amount} = req.body
     const token = await payment.generateToken()
-    const result = await payment.stkPush("1500", phone, token.access_token)
+    const result = await payment.stkPush(amount, phone, token.access_token, user_id, null,"subscription")
     res.status(200).json(result)
 })
 
 app.use("/pay-driver", async(req,res)=>{
     const { user_id, driver_id, phone, amount } = req.body
     const token = await payment.generateToken()
-    const result = await payment.stkPush(amount, phone, token.access_token)
+    const result = await payment.stkPush(amount, phone, token.access_token, user_id, driver_id, "driver_payment")
     res.status(200).json(result)
 })
 
-app.post("/handler", (req, res) => {
+app.post("/handler", async(req, res) => {
+    console.log("It is being handled at this point........")
     console.log(req.query)
     console.log(req.body)
-    const {user_id, type, amount} = req.query
-    if(type == 'subscription'){
+    const {user_id, type, amount, recepient_id} = req.query
+    if(type == 'subscription' && req.body.Body.stkCallback.ResultCode == 0){
+        try{
+            payment.createOrUpdateWallet(amount, user_id, true)
+        }
+        catch(e){
+            res.status(400).send(e)
+        }
+    }
+    if(type == 'driver_payment' && req.body.Body.stkCallback.ResultCode == 0){
+        try{
+            payment.createPayment(amount, user_id, recepient_id)
+        }
+        catch(e){
+            res.status(400).send(e)
+        }
 
     }
-    if(type == 'payment'){
-
-    }
-    console.log(req.body.Body.stkCallback);
+    console.log(req.body.Body.stkCallback.ResultCode);
 });
 
 ///For google login

@@ -1,9 +1,5 @@
 
-const express = require("express");
 
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const router = express.Router()
-const FCM = require('fcm-node')
 let unirest = require('unirest');
 // const got = require("got")
 const axios  = require("axios")
@@ -31,14 +27,7 @@ const mpesa = new Mpesa(credentials, environment);
 
 // const fcm = new FCM(serverKey);
 
-router.get("/subscribe", async(req, res)=>{
-    console.log("Subscribe")
-    const {amount , user_id} = req.query
-    console.log(req.query)
-    const details = await c2b(amount, "254726539744")
-    console.log("These are the details", details)
 
-})
 
 const generateToken=async()=>{
     const config = {
@@ -61,7 +50,7 @@ const generateToken=async()=>{
     return(res.data)
 }
 
-const stkPush=async(amount,phone, token)=>{
+const stkPush=async(amount,phone, token, user_id, driver_id, payment_type)=>{
     const config={
         method: 'post',
         url: "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
@@ -78,7 +67,7 @@ const stkPush=async(amount,phone, token)=>{
             "PartyA":phone,    
             "PartyB":"174379",    
             "PhoneNumber":phone,    
-            "CallBackURL":`https://rydr.eu-gb.cf.appdomain.cloud/handler?user_id=${user_id}&amount=${amount}&type=${payment_type}`,    
+            "CallBackURL":`https://rydr.eu-gb.cf.appdomain.cloud/handler?user_id=${user_id}&amount=${amount}&type=${payment_type}&recepient_id=${driver_id}`,    
             "AccountReference":"Test",    
             "TransactionDesc":"Test"
          }
@@ -157,47 +146,35 @@ const c2b=(amount, phone)=>{
     });
     return req
 }
+const createOrUpdateWallet=async(amount, user_id, subscribed)=>{
+    console.log(amount, user_id, subscribed)
+    let updated
 
-const createOrUpdateWallet=async(amount, user_id)=>{
-    const res = await Wallet.findOne({user_id:user_id},
-        function async(error, result){
-            if(result){
-                console.log(result)
-                try{
-                    Wallet.findOneAndUpdate({user_id:user_id},{amount:amount})
-                } 
-                catch(e){
-                    res.status(400).json(e)
-                }
-            }
-            if(error){
-                try{
-                    Wallet.create({user_id:user_id,amount:amount})
-                }
-                catch(e){
-                    res.status(400).json(e)
-                }
-            }
-        })
+    const wallet = await Wallet.findOne({user_id:user_id})
+    if(wallet){
+        console.log(wallet)
+        let amt =  wallet.balance + parseInt(amount)
+        console.log(amt)
+        updated = await Wallet.findOneAndUpdate({user_id:user_id},{ subscribed: subscribed})    
+    }
+    else{
+        await Wallet.create({user_id:user_id,subscribed: subscribed}) 
+    }
+
+    return updated
 }
 
 const createPayment=async(amount, user_id, recepient_id)=>{
-    const res = await Wallet.findOne({user_id:user_id},
-        function async(error, result){
-            if(error){
-                console.log(result)
-                res.status(400).json(error)
-            }
-            if(result){
-                try{
-                    Payment.create({user_id:user_id, amount:amount, recepient_id:recepient_id})
-                    Wallet.findOneAndUpdate({user_id: recepient_id, amount: amount})
-                }
-                catch(e){
-                    res.status(400).json(e)
-                }
-            }
-        })
+    const wallet = await Wallet.findOne({user_id:recepient_id})
+    await Payment.create({user_id:user_id, balance:amount, recepient_id:recepient_id})
+    if(wallet){
+        let amt =  wallet.balance + parseInt(amount)
+        await Wallet.findOneAndUpdate({user_id: recepient_id, balance: amt})
+    }
+    else{
+        await Wallet.create({user_id: recepient_id, balance: amt})
+    }
+    return wallet
 }
 
 
