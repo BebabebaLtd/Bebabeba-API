@@ -14,8 +14,26 @@ const serverKey = require("../rydr-aff11-firebase-adminsdk-a30ws-a8274d05d9.json
 const message = require("../model/message");
 const decode = require("../decode");
 const checkCarpoolViability = require("../checkCarpoolViability");
-const { trigger } = require("../config/database");
+const Pusher = require("pusher");
 const fcm = new FCM(serverKey);
+
+const pusher = new Pusher({
+    appId      : '1421745',
+    key        : '5d04aa1d0893f7e00bb2',
+    secret     : '7e159705067585400435',
+    cluster    : 'eu',
+    encrypted  : true,
+});
+
+const trigger=(channel, body)=>{
+    pusher.trigger(
+        channel,
+        'updated', 
+        body
+    );
+}
+
+
 router.post("/sendnotification",async(req, res)=>{
     const {title , msg, user_id,token , data }  = req.body
     let return_token = ''

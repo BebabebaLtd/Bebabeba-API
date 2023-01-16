@@ -8,141 +8,197 @@ let unirest = require('unirest');
 // const got = require("got")
 const axios  = require("axios")
 
+const Mpesa = require("mpesa-api").Mpesa;
+
 const serverKey = require("../rydr-aff11-firebase-adminsdk-a30ws-a8274d05d9.json");
 
 const Payment = require('../model/payment')
 const Traveler = require('../model/traveler')
+const Wallet = require('../model/wallet')
+
+const credentials = {
+    clientKey: 't9pqmMLDI8AZA5kGN9iDUEopHZi9AJPq',
+    clientSecret: '7u3FOrtU9CuR1HDE',
+    initiatorPassword: 'MTc0Mzc5N3UzRk9ydFU5Q3VSMUhERTIwMjMwMTE0MDcyNDU5',
+};
+const environment = "sandbox";
+
+const mpesa = new Mpesa(credentials, environment);
+
+//or
+// const environment = "production";
+ 
 
 // const fcm = new FCM(serverKey);
 
-router.post("/subscribe", async(req, res)=>{
+router.get("/subscribe", async(req, res)=>{
+    console.log("Subscribe")
     const {amount , user_id} = req.query
     console.log(req.query)
+    const details = await c2b(amount, "254726539744")
+    console.log("These are the details", details)
 
-
-    try
-    {
-        Payment.create({
-            amount:amount,
-            user_id:user_id
-        }, function(err, response){
-            if(err)
-            {
-                console.log("Something went wrong")
-            }
-            if(response)
-            {
-                console.log(response)
-                res.status(200).json(response)
-
-                const traveler = Traveler.findOne({user_id}, function(err, response){
-                    if(response)
-                    {
-                        token = response.devToken
-                        var message = {
-                            to: token, 
-                            notification: {
-                                title: title, 
-                                body: "Your payment was successful",
-                            }
-                        };
-
-                        fcm.send(message, function(err, response){
-                            if (err) {
-                                console.log("Something has gone wrong!");
-                                console.log(err)
-                                res.status(400).json(err)
-                            } else {
-                                console.log("Successfully sent with response: ", response);
-                                res.status(200).json(response)
-                            }
-                        });
-
-                    }
-                })
-            }
-        })
-    }
-    catch(e)
-    {
-
-    }
 })
 
+const generateToken=async()=>{
+    const config = {
+        method: 'get',
+        url: "https://sandbox.safaricom.co.ke/oauth/v1/generate",
+        headers: {
+          'Accept': 'application/json',
+          "Authorization": "Basic QXpzMktlalUxQVJ2SUw1SmRKc0FSYlYyZ0RyV21wT0I6aGlwR3ZGSmJPeHJpMzMwYw==",
+          "Username": "Azs2KejU1ARvIL5JdJsARbV2gDrWmpOB",
+          "Password": "hipGvFJbOxri330c"
+          // "Content-Type": "application/x-www-form-urlencoded"
+        },
+        params: {
+            grant_type: "client_credentials"
+        },
+    }
 
-router.post("/stk", async(req, response)=>{
-    const { user_id, amount } = req.body
-    let request = unirest('POST', 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest')
+    const res = await axios(config)
+    console.log(res)
+    return(res.data)
+}
+
+const stkPush=async(amount,phone, token)=>{
+    const config={
+        method: 'post',
+        url: "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        data: {    
+            "BusinessShortCode":"174379",    
+            "Password": "MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMTYwMjE2MTY1NjI3",    
+            "Timestamp":"20160216165627",    
+            "TransactionType": "CustomerPayBillOnline",    
+            "Amount":amount,    
+            "PartyA":phone,    
+            "PartyB":"174379",    
+            "PhoneNumber":phone,    
+            "CallBackURL":`https://rydr.eu-gb.cf.appdomain.cloud/handler?user_id=${user_id}&amount=${amount}&type=${payment_type}`,    
+            "AccountReference":"Test",    
+            "TransactionDesc":"Test"
+         }
+    }
+
+    const res = await axios(config)
+    console.log("c2b")
+    // console.log(token)
+
+    return res.data
+}
+
+const transactionStatus=async(CheckoutRequestID, token)=>{
+    const config = {
+        method: 'post',
+        url: "https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query",
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        data:{
+            "BusinessShortCode":"174379",    
+            "Password": "MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMTYwMjE2MTY1NjI3",    
+            "Timestamp":"20160216165627",    
+            "CheckoutRequestID": CheckoutRequestID
+        }
+    }
+
+    const res = await axios(config)
+    return(res.data)
+}
+
+const b2c=()=>{
+    mpesa
+  .b2c({
+    Initiator: "Initiator Name",
+    Amount: 1000 /* 1000 is an example amount */,
+    PartyA: "Party A",
+    PartyB: "Party B",
+    QueueTimeOutURL: "Queue Timeout URL",
+    ResultURL: "Result URL",
+    CommandID: "Command ID" /* OPTIONAL */,
+    Occasion: "Occasion" /* OPTIONAL */,
+    Remarks: "Remarks" /* OPTIONAL */,
+  })
+  .then((response) => {
+    //Do something with the response
+    //eg
+    console.log(response);
+  })
+  .catch((error) => {
+    //Do something with the error;
+    //eg
+    console.error(error);
+  });
+}
+
+const c2b=(amount, phone)=>{
+    console.log("c2b")
+    let req = unirest('POST', 'https://sandbox.safaricom.co.ke/mpesa/c2b/v1/simulate')
     .headers({
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer B7YedyqBdSUnbkFG6GXMDAbZC1FV'
+        'Authorization': 'Bearer GUA0iurpHPulOcwueYbQyJqMYvj3'
     })
     .send(JSON.stringify({
-        "BusinessShortCode": 174379,
-        "Password": "MTc0Mzc5YmZiMjc5ZjlhYTliZGJjZjE1OGU5N2RkNzFhNDY3Y2QyZTBjODkzMDU5YjEwZjc4ZTZiNzJhZGExZWQyYzkxOTIwMjIwNzIzMDk1NDEz",
-        "Timestamp": "20220723095413",
-        "TransactionType": "CustomerPayBillOnline",
-        "Amount": amount,
-        "PartyA": 254726539744,
-        "PartyB": 174379,
-        "PhoneNumber": 254726539744,
-        "CallBackURL": `https://rydr.eu-gb.cf.appdomain.cloud/pay/subscribe?user_id=${user_id}&amount=${amount}`,
-        "AccountReference": "Rydr",
-        "TransactionDesc": "Payment of Driver Fees" 
-      }))
+        "ShortCode": 600987,
+        "CommandID": "CustomerBuyGoodsOnline",
+        "amount": "100",
+        "MSISDN": phone,
+        "BillRefNumber": "12345678",
+    }))
     .end(res => {
-        if(res.error) 
-        {
-            console.log(res.error)
-            response.status(400).send(res.error)
-        }
-        else{
-            if(res.body.ResponseCode = "0")
-            {
-                console.log("first")
-            }
-            response.status(200).send(res.body)
-        }
-        
+        console.log("This is the error",res.raw_body)
+        if (res.error) throw new Error(res.error);
+        console.log(res.raw_body);
     });
-})
+    return req
+}
 
-router.post("/flutterwave", async(req, res)=>{
-    const {name ,email , phone, amount, user_id} = req.body
-    console.log(process.env.FL_SECRET_KEY)
-    const code = "RYDR"+String(Math.floor(1000 + Math.random() * 9000))
-    try{
-        const response = await axios.post("https://api.flutterwave.com/v3/payments", {
-            headers:{
-                Authorization: `Bearer ${process.env.FL_SECRET_KEY}`
-            },
-            body: {
-                tx_ref: code,
-                amount : amount,
-                currency: "KES",
-                redirect_url: ` subscribe?user_id=${user_id}&amount=${amount}`,
-                // meta:{
-                //     consumer_id: 23,
-                //     consumer_mac: "92a3-912ba-1192a"
-                // },
-                customer:{
-                    email: email,
-                    phonenumber: phone,
-                    name: name
-                },
-                customizations:{
-                    title:"Rydr Payment",
-                },
-                // payment_options: "card"
+const createOrUpdateWallet=async(amount, user_id)=>{
+    const res = await Wallet.findOne({user_id:user_id},
+        function async(error, result){
+            if(result){
+                console.log(result)
+                try{
+                    Wallet.findOneAndUpdate({user_id:user_id},{amount:amount})
+                } 
+                catch(e){
+                    res.status(400).json(e)
+                }
+            }
+            if(error){
+                try{
+                    Wallet.create({user_id:user_id,amount:amount})
+                }
+                catch(e){
+                    res.status(400).json(e)
+                }
             }
         })
+}
 
-        res.status(200).send(response)
-    }
-    catch(err){
-        console.log(err)
-        res.status(400).send(err)
-    }
+const createPayment=async(amount, user_id, recepient_id)=>{
+    const res = await Wallet.findOne({user_id:user_id},
+        function async(error, result){
+            if(error){
+                console.log(result)
+                res.status(400).json(error)
+            }
+            if(result){
+                try{
+                    Payment.create({user_id:user_id, amount:amount, recepient_id:recepient_id})
+                    Wallet.findOneAndUpdate({user_id: recepient_id, amount: amount})
+                }
+                catch(e){
+                    res.status(400).json(e)
+                }
+            }
+        })
+}
 
-})
-module.exports = router
+
+module.exports = {stkPush, b2c, c2b, generateToken, createOrUpdateWallet, createPayment, transactionStatus}

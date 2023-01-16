@@ -11,9 +11,13 @@ const passport = require('passport')
 const bodyParser = require("body-parser");
 const axios = require('axios')
 const FCM = require('fcm-node')
+
+const payment = require("./payment/index")
 // const AccessToken = require('twilio').jwt.AccessToken;
 // const VoiceGrant = AccessToken.VoiceGrant;
 const googleMapDirections = require('./googleMapDirections')
+
+console.log(payment)
 
 
 
@@ -690,7 +694,6 @@ app.use("/updateride", async(req,res)=>{
     }
 })
 
-
 app.use("/register-vehicle", async(req, res)=>{
     try{
         const { user_id, front_image, back_image, left_image, right_image, plate_image, dashboard_image, seats_image, plate_number} = req.body
@@ -944,7 +947,32 @@ app.use("/getviablerides", async(req,res)=>{
 app.use("/send", require('./notifications/api') )
 
 
-app.use("/pay", require('./payment/index'))
+app.use("/subscribe", async(req,res)=>{
+    const { user_id, phone} = req.body
+    const token = await payment.generateToken()
+    const result = await payment.stkPush("1500", phone, token.access_token)
+    res.status(200).json(result)
+})
+
+app.use("/pay-driver", async(req,res)=>{
+    const { user_id, driver_id, phone, amount } = req.body
+    const token = await payment.generateToken()
+    const result = await payment.stkPush(amount, phone, token.access_token)
+    res.status(200).json(result)
+})
+
+app.post("/handler", (req, res) => {
+    console.log(req.query)
+    console.log(req.body)
+    const {user_id, type, amount} = req.query
+    if(type == 'subscription'){
+
+    }
+    if(type == 'payment'){
+
+    }
+    console.log(req.body.Body.stkCallback);
+});
 
 ///For google login
 // const googleConfig={

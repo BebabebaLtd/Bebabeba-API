@@ -5,7 +5,7 @@ const Ride = require("../model/ride");
 
 const { MONGO_URI } = process.env;
 
-export const pusher = new Pusher({
+const pusher = new Pusher({
     appId      : '1421745',
     key        : '5d04aa1d0893f7e00bb2',
     secret     : '7e159705067585400435',
@@ -51,7 +51,7 @@ db.once("open", ()=>{
     })
 })
 
-export const trigger=(channel, body)=>{
+const trigger=(channel, body)=>{
     pusher.trigger(
         channel,
         'updated', 

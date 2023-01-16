@@ -25,6 +25,7 @@
     "got": "^12.1.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.2.3",
+    "mpesa-api": "^3.0.2",
     "node": "16.13.1",
     "node-fetch": "^3.2.4",
     "passport": "^0.5.2",
