@@ -154,8 +154,7 @@ app.use("/createuser", async(req,res)=>{
             identification_number:id_number
         }, function(err, result){
             if(result){
-                console.log(result)
-               
+                Wallet.create({user_id:result._id})
                 Traveler.create({
                     user_id:result._id,
                     first_name:result.first_name,
@@ -163,9 +162,7 @@ app.use("/createuser", async(req,res)=>{
                     phone: result.phone,  
                 },
                 function(err,result){
-                    console.log("This>>>>>>>>>>>>>>",result)
                     if(result){
-                        console.log( process.env.TOKEN_KEY)
                         const token = jwt.sign(result.toJSON(), process.env.TOKEN_KEY);
                         res.status(200).send(token)
                         
@@ -940,13 +937,19 @@ app.use("/getviablerides", async(req,res)=>{
     }) 
     });
 
+app.use("/send", require('./notifications/api'))
 
+app.use("/get-wallet", async(req,res)=>{
+    const { user_id } = req.body
+    const wallet = await Wallet.findOne({user_id:user_id})
+    res.status(200).json(wallet)
+})
 
-
-
-
-app.use("/send", require('./notifications/api') )
-
+app.use("/create-wallet", async(req,res)=>{
+    const { user_id } = req.body
+    const wallet = await Wallet.create({user_id:user_id})
+    res.status(200).json(wallet)
+})
 
 app.use("/subscribe", async(req,res)=>{
     const { user_id, phone, amount} = req.body
