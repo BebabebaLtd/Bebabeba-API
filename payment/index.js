@@ -100,29 +100,33 @@ const transactionStatus=async(CheckoutRequestID, token)=>{
     return(res.data)
 }
 
-const b2c=()=>{
-    mpesa
-  .b2c({
-    Initiator: "Initiator Name",
-    Amount: 1000 /* 1000 is an example amount */,
-    PartyA: "Party A",
-    PartyB: "Party B",
-    QueueTimeOutURL: "Queue Timeout URL",
-    ResultURL: "Result URL",
-    CommandID: "Command ID" /* OPTIONAL */,
-    Occasion: "Occasion" /* OPTIONAL */,
-    Remarks: "Remarks" /* OPTIONAL */,
-  })
-  .then((response) => {
-    //Do something with the response
-    //eg
-    console.log(response);
-  })
-  .catch((error) => {
-    //Do something with the error;
-    //eg
-    console.error(error);
-  });
+const b2c=async(token,amount, user_id, payment_type, driver_id)=>{
+    const config={
+        method: 'post',
+        url: "https://sandbox.safaricom.co.ke/mpesa/b2c/v1/paymentrequest",
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        data: {    
+            "InitiatorName": "Rydr",    
+            "SecurityCredential": "EsJocK7+NjqZPC3I3EO+TbvS+xVb9TymWwaKABoaZr/Z/n0UysSsEfea4eQyeWWmyx0t7K1vmfUlGk....", 
+            "CommandID": "BusinessPayment",    
+            "Amount": amount,    
+            "PartyA": "8136583",
+            "PartyB": phone,    
+            "Remarks": "Rydr payment",    
+            "QueueTimeOutURL": `https://rydr.eu-gb.cf.appdomain.cloud/handler-failed?user_id=${user_id}&amount=${amount}&type=${payment_type}&recepient_id=${driver_id}`,    
+            "ResultURL": `https://rydr.eu-gb.cf.appdomain.cloud/handler?user_id=${user_id}&amount=${amount}&type=${payment_type}&recepient_id=${driver_id}`,    
+            "Occassion": "Rydr Payment"
+         }
+    }
+
+    const res = await axios(config)
+    console.log("b2c")
+    // console.log(token)
+
+    return res.data
 }
 
 const c2b=(amount, phone)=>{

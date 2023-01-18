@@ -987,7 +987,28 @@ app.post("/handler", async(req, res) => {
         }
 
     }
-    console.log(req.body.Body.stkCallback.ResultCode);
+});
+
+app.post("/handler-b2c", async(req, res) => {
+    // payment.createPayment("12","aacde","bbfre")
+    console.log("It is being handled at this point........")
+    console.log(req.query)
+    const {user_id, type, amount, recepient_id} = req.query
+
+    if(type == 'withdrawal' && req.result.ResultCode == 0){
+        try{
+            payment.createPayment(-amount, user_id, recepient_id)
+        }
+        catch(e){
+            res.status(400).send(e)
+        }
+
+    }
+});
+
+app.post("/handler-failed", async(req, res) => {
+    res.status(400).send({status:"Failed"})
+
 });
 
 ///For google login
