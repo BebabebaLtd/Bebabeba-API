@@ -2,7 +2,7 @@ const AfricasTalking = require('africastalking');
 
 // TODO: Initialize Africa's Talking
 const africasTalking = AfricasTalking({
-    apiKey:'b5d18c8c0a469e2a70e7e3357a82f8aeb2066dd47346c234707b468c722297af',
+    apiKey:'26a2f97b624f315d186d3579901f86f8c8b3868089d41c4c65740bd1285d58a2',
     username:'TomiTsuma'
 })
 
